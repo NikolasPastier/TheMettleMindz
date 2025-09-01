@@ -6,11 +6,26 @@ const secretKey = process.env.STRIPE_SECRET_KEY
 
 if (!publishableKey) {
   console.warn("[v0] NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is not set")
+  console.warn(
+    "[v0] Available env vars:",
+    Object.keys(process.env).filter((key) => key.includes("STRIPE")),
+  )
 }
 
 if (!secretKey) {
   console.warn("[v0] STRIPE_SECRET_KEY is not set")
+  console.warn(
+    "[v0] Available env vars:",
+    Object.keys(process.env).filter((key) => key.includes("STRIPE")),
+  )
 }
+
+console.log("[v0] Stripe configuration status:", {
+  hasPublishableKey: !!publishableKey,
+  hasSecretKey: !!secretKey,
+  publishableKeyPrefix: publishableKey ? publishableKey.substring(0, 7) + "..." : "not found",
+  secretKeyPrefix: secretKey ? secretKey.substring(0, 7) + "..." : "not found",
+})
 
 // Initialize Stripe with publishable key (client-side)
 export const stripePromise = publishableKey ? loadStripe(publishableKey) : null

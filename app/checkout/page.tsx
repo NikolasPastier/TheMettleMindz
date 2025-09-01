@@ -194,15 +194,27 @@ export default function CheckoutPage() {
 
                     {error && (
                       <Alert className="bg-red-500/10 border-red-500/20">
-                        <AlertDescription className="text-red-400 flex justify-between items-start text-sm">
-                          <span>{error}</span>
-                          <button
-                            onClick={clearError}
-                            className="text-red-300 hover:text-red-100 ml-2"
-                            aria-label="Dismiss error"
-                          >
-                            ×
-                          </button>
+                        <AlertDescription className="text-red-400 flex flex-col gap-2 text-sm">
+                          <div className="flex justify-between items-start">
+                            <span>{error}</span>
+                            <button
+                              onClick={clearError}
+                              className="text-red-300 hover:text-red-100 ml-2"
+                              aria-label="Dismiss error"
+                            >
+                              ×
+                            </button>
+                          </div>
+                          {error.includes("Payment processing is currently unavailable") && (
+                            <div className="text-xs text-gray-400 mt-2 p-2 bg-black/20 rounded border border-white/10">
+                              <p className="font-medium text-gray-300 mb-1">To resolve this issue:</p>
+                              <ul className="list-disc list-inside space-y-1">
+                                <li>Check that Stripe environment variables are configured in Project Settings</li>
+                                <li>Ensure STRIPE_SECRET_KEY and NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY are set</li>
+                                <li>Try refreshing the page after configuration</li>
+                              </ul>
+                            </div>
+                          )}
                         </AlertDescription>
                       </Alert>
                     )}

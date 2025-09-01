@@ -31,7 +31,7 @@ export default function ThemePageMasterclassEbookPage() {
           {/* Hero Section */}
           <div className="grid md:grid-cols-2 gap-12 items-center mb-16">
             <div className="space-y-6 slide-in-left">
-              <h1 className="text-4xl md:text-5xl font-bold text-red-500 leading-tight">
+              <h1 className="text-4xl md:text-5xl font-bold text-white leading-tight">
                 TheMettleMindz E-Book: From Zero to 100K Followers
               </h1>
               <p className="text-lg text-white leading-relaxed">
@@ -67,7 +67,7 @@ export default function ThemePageMasterclassEbookPage() {
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
                   <span className="text-3xl font-bold text-red-500">${product.price}</span>
-                  <span className="text-xl text-gray-400 line-through">${product.originalPrice}</span>
+                  <span className="text-xl text-white/60 line-through">${product.originalPrice}</span>
                   <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">41% OFF</span>
                 </div>
 
@@ -110,10 +110,10 @@ export default function ThemePageMasterclassEbookPage() {
 
           {/* What's Inside Section */}
           <div className="mb-16">
-            <h2 className="text-3xl font-bold text-red-400 mb-8 text-center">Inside the E-Book You'll Discover</h2>
+            <h2 className="text-3xl font-bold text-white mb-8 text-center">Inside the E-Book You'll Discover</h2>
             <div className="grid md:grid-cols-2 gap-8">
-              <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-6 border border-red-500/20">
-                <h3 className="text-xl font-bold text-red-400 mb-4">Chapters 1-5: Foundation</h3>
+              <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-6 border border-red-500/40">
+                <h3 className="text-xl font-bold text-red-500 mb-4">Chapters 1-5: Foundation</h3>
                 <ul className="space-y-2 text-white">
                   <li>• Introduction to Social Media Theme Pages</li>
                   <li>• Choosing Your Perfect Niche</li>
@@ -123,8 +123,8 @@ export default function ThemePageMasterclassEbookPage() {
                 </ul>
               </div>
 
-              <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-6 border border-red-500/20">
-                <h3 className="text-xl font-bold text-red-400 mb-4">Chapters 6-10: Growth & Monetization</h3>
+              <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-6 border border-red-500/40">
+                <h3 className="text-xl font-bold text-red-500 mb-4">Chapters 6-10: Growth & Monetization</h3>
                 <ul className="space-y-2 text-white">
                   <li>• Monetizing Your Theme Page ($50K+ methods)</li>
                   <li>• Networking and Collaboration</li>
@@ -138,18 +138,18 @@ export default function ThemePageMasterclassEbookPage() {
 
           {/* Key Benefits Section */}
           <div className="mb-16">
-            <h2 className="text-3xl font-bold text-red-400 mb-8 text-center">Why This E-Book?</h2>
+            <h2 className="text-3xl font-bold text-white mb-8 text-center">Why This E-Book?</h2>
             <div className="grid md:grid-cols-3 gap-6">
-              <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-6 border border-red-500/20 text-center">
-                <h3 className="text-lg font-bold text-red-400 mb-3">Beginner-Friendly</h3>
+              <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-6 border border-red-500/40 text-center">
+                <h3 className="text-lg font-bold text-red-500 mb-3">Beginner-Friendly</h3>
                 <p className="text-white">No prior experience needed to start</p>
               </div>
-              <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-6 border border-red-500/20 text-center">
-                <h3 className="text-lg font-bold text-red-400 mb-3">Proven Success</h3>
+              <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-6 border border-red-500/40 text-center">
+                <h3 className="text-lg font-bold text-red-500 mb-3">Proven Success</h3>
                 <p className="text-white">Based on real results and millions of views</p>
               </div>
-              <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-6 border border-red-500/20 text-center">
-                <h3 className="text-lg font-bold text-red-400 mb-3">Actionable Steps</h3>
+              <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-6 border border-red-500/40 text-center">
+                <h3 className="text-lg font-bold text-red-500 mb-3">Actionable Steps</h3>
                 <p className="text-white">Follow the guide and watch your page grow</p>
               </div>
             </div>
@@ -157,17 +157,17 @@ export default function ThemePageMasterclassEbookPage() {
 
           {/* Results Section */}
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-red-400 mb-8">Our Proven Track Record</h2>
+            <h2 className="text-3xl font-bold text-white mb-8">Our Proven Track Record</h2>
             <div className="grid md:grid-cols-3 gap-8">
-              <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-6 border border-red-500/20">
+              <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-6 border border-red-500/40">
                 <div className="text-3xl font-bold text-red-500 mb-2">0 → 100K+</div>
                 <p className="text-white">Followers in under 6 months</p>
               </div>
-              <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-6 border border-red-500/20">
+              <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-6 border border-red-500/40">
                 <div className="text-3xl font-bold text-red-500 mb-2">20M+</div>
                 <p className="text-white">Views generated</p>
               </div>
-              <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-6 border border-red-500/20">
+              <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-6 border border-red-500/40">
                 <div className="text-3xl font-bold text-red-500 mb-2">$50K+</div>
                 <p className="text-white">Revenue generated</p>
               </div>
@@ -175,7 +175,7 @@ export default function ThemePageMasterclassEbookPage() {
           </div>
 
           {/* CTA Section */}
-          <div className="text-center bg-black/30 backdrop-blur-sm rounded-2xl p-8 border border-red-500/20">
+          <div className="text-center bg-black/60 backdrop-blur-sm rounded-2xl p-8 border border-red-500/40">
             <h2 className="text-2xl font-bold text-white mb-4">
               Don't wait any longer to start your journey as a Faceless Content Creator
             </h2>
@@ -191,7 +191,7 @@ export default function ThemePageMasterclassEbookPage() {
             >
               {isAdding ? "Adding to Cart..." : "Get Instant Access - $29"}
             </Button>
-            <p className="text-sm text-gray-400 mt-4">
+            <p className="text-sm text-white/60 mt-4">
               Instant PDF download • Compatible with all devices • 30-day money-back guarantee
             </p>
           </div>

@@ -38,6 +38,7 @@ export default function SuccessPage() {
   const [purchasedItems, setPurchasedItems] = useState<PurchasedItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [purchaseRecorded, setPurchaseRecorded] = useState(false)
   const { addPurchase } = useAuth()
 
   useEffect(() => {
@@ -63,6 +64,26 @@ export default function SuccessPage() {
         }
 
         setSessionData(data.session)
+
+        try {
+          const recordResponse = await fetch("/api/record-purchase", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              sessionId: sessionId,
+            }),
+          })
+
+          if (recordResponse.ok) {
+            setPurchaseRecorded(true)
+          } else {
+            console.error("Failed to record purchase:", await recordResponse.text())
+          }
+        } catch (recordError) {
+          console.error("Error recording purchase:", recordError)
+        }
 
         if (data.session.metadata?.items) {
           try {
@@ -96,7 +117,8 @@ export default function SuccessPage() {
   const getDownloadLink = (itemId: string) => {
     const downloadLinks: Record<string, string> = {
       "champions-mindset": "/downloads/champions-mindset.pdf",
-      "theme-page-masterclass": "/downloads/theme-page-masterclass.zip",
+      "theme-page-masterclass": "/course/theme-page-masterclass", // Link to course page instead of download
+      "theme-page-masterclass-ebook": "/downloads/theme-page-masterclass-ebook.pdf",
       "viral-clip-pack-bundle": "/downloads/viral-clip-pack-bundle.zip",
     }
     return downloadLinks[itemId] || `/downloads/${itemId}.pdf`
@@ -105,10 +127,15 @@ export default function SuccessPage() {
   const getItemDescription = (itemId: string) => {
     const descriptions: Record<string, string> = {
       "champions-mindset": "Complete e-book with bonus materials and 60-day roadmap",
-      "theme-page-masterclass": "Video course with templates and resources",
+      "theme-page-masterclass": "Video course with templates and resources - Access your course now!",
+      "theme-page-masterclass-ebook": "E-book version with comprehensive guide and resources",
       "viral-clip-pack-bundle": "100+ viral clips with editing templates",
     }
     return descriptions[itemId] || "Digital product with instant access"
+  }
+
+  const getActionText = (itemId: string) => {
+    return itemId === "theme-page-masterclass" ? "Access Course" : "Download"
   }
 
   if (loading) {
@@ -164,10 +191,17 @@ export default function SuccessPage() {
           </svg>
           <h1 className="text-4xl font-bold text-white mb-4">Payment Successful!</h1>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            Thank you for your purchase. Your digital products are ready for instant download.
+            Thank you for your purchase. Your digital products are ready for instant access.
           </p>
-          {sessionData.customer_name && (
+          {sessionData?.customer_name && (
             <p className="text-gray-400 mt-2">Welcome to the champion mindset, {sessionData.customer_name}!</p>
+          )}
+          {purchaseRecorded && (
+            <Alert className="bg-green-500/10 border-green-500/20 max-w-md mx-auto mt-4">
+              <AlertDescription className="text-green-400">
+                Your purchase has been added to your account for future access.
+              </AlertDescription>
+            </Alert>
           )}
         </div>
 
@@ -185,7 +219,7 @@ export default function SuccessPage() {
                       d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                     />
                   </svg>
-                  Your Downloads
+                  Your Products
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -201,23 +235,37 @@ export default function SuccessPage() {
                         {item.quantity > 1 && <p className="text-red-400 text-sm">Quantity: {item.quantity}</p>}
                       </div>
                       <Button asChild className="bg-red-500 hover:bg-red-600 text-white font-bold">
-                        <a href={getDownloadLink(item.id)} download>
-                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                            />
-                          </svg>
-                          Download
-                        </a>
+                        {item.id === "theme-page-masterclass" ? (
+                          <Link href={getDownloadLink(item.id)}>
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h1m4 0h1m6-10V7a3 3 0 00-3-3H6a3 3 0 00-3 3v4a3 3 0 003 3h7m3-10l3 3m-3-3v8"
+                              />
+                            </svg>
+                            {getActionText(item.id)}
+                          </Link>
+                        ) : (
+                          <a href={getDownloadLink(item.id)} download>
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                              />
+                            </svg>
+                            {getActionText(item.id)}
+                          </a>
+                        )}
                       </Button>
                     </div>
                   ))
                 ) : (
                   <div className="text-center py-8">
-                    <p className="text-gray-400">No download items found. Please contact support.</p>
+                    <p className="text-gray-400">No items found. Please contact support.</p>
                   </div>
                 )}
 
@@ -231,7 +279,7 @@ export default function SuccessPage() {
                     />
                   </svg>
                   <AlertDescription className="text-blue-400">
-                    Download links have also been sent to {sessionData?.customer_email}
+                    Access links have also been sent to {sessionData?.customer_email}
                   </AlertDescription>
                 </Alert>
               </CardContent>

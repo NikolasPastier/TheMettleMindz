@@ -36,7 +36,7 @@ export default function ThemePageMasterclassPage() {
           {/* Hero Section */}
           <div className="grid md:grid-cols-2 gap-12 items-center mb-16">
             <div className="space-y-6 slide-in-left">
-              <h1 className="text-4xl md:text-5xl font-bold text-red-500 leading-tight">Theme Page Masterclass</h1>
+              <h1 className="text-4xl md:text-5xl font-bold text-white leading-tight">Theme Page Masterclass</h1>
               <p className="text-lg text-white leading-relaxed">
                 Build Your Own Profitable Faceless Instagram Page. Want to grow fast on Instagram, reach 100K+
                 followers, and turn motivation into money — without ever showing your face?
@@ -70,7 +70,7 @@ export default function ThemePageMasterclassPage() {
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
                   <span className="text-3xl font-bold text-red-500">${product.price}</span>
-                  <span className="text-xl text-gray-400 line-through">${product.originalPrice}</span>
+                  <span className="text-xl text-white/60 line-through">${product.originalPrice}</span>
                   <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">51% OFF</span>
                 </div>
 
@@ -113,10 +113,10 @@ export default function ThemePageMasterclassPage() {
 
           {/* Course Breakdown Section */}
           <div className="mb-16">
-            <h2 className="text-3xl font-bold text-red-400 mb-8 text-center">Course Breakdown</h2>
+            <h2 className="text-3xl font-bold text-white mb-8 text-center">Course Breakdown</h2>
             <div className="grid md:grid-cols-2 gap-8">
-              <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-6 border border-red-500/20">
-                <h3 className="text-xl font-bold text-red-400 mb-4">Foundation & Growth</h3>
+              <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-6 border border-red-500/40">
+                <h3 className="text-xl font-bold text-red-500 mb-4">Foundation & Growth</h3>
                 <ul className="space-y-2 text-white">
                   <li>• Mindset of a Successful Creator</li>
                   <li>• Designing Your Profile for Growth</li>
@@ -125,8 +125,8 @@ export default function ThemePageMasterclassPage() {
                 </ul>
               </div>
 
-              <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-6 border border-red-500/20">
-                <h3 className="text-xl font-bold text-red-400 mb-4">Content & Monetization</h3>
+              <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-6 border border-red-500/40">
+                <h3 className="text-xl font-bold text-red-500 mb-4">Content & Monetization</h3>
                 <ul className="space-y-2 text-white">
                   <li>• Viral Content Strategies</li>
                   <li>• Editing Mastery Techniques</li>
@@ -139,18 +139,18 @@ export default function ThemePageMasterclassPage() {
 
           {/* Viral Clip Pack Section */}
           <div className="mb-16">
-            <h2 className="text-3xl font-bold text-red-400 mb-8 text-center">Viral Clip Pack Bundle</h2>
+            <h2 className="text-3xl font-bold text-white mb-8 text-center">Viral Clip Pack Bundle</h2>
             <div className="grid md:grid-cols-3 gap-6">
-              <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-6 border border-red-500/20 text-center">
-                <h3 className="text-lg font-bold text-red-400 mb-3">1,300+ Motivational Clips</h3>
+              <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-6 border border-red-500/40 text-center">
+                <h3 className="text-lg font-bold text-red-500 mb-3">1,300+ Motivational Clips</h3>
                 <p className="text-white">Rocky, Creed, Batman, Anime, Kobe Bryant & more</p>
               </div>
-              <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-6 border border-red-500/20 text-center">
-                <h3 className="text-lg font-bold text-red-400 mb-3">3,500+ Luxury 4K Clips</h3>
+              <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-6 border border-red-500/40 text-center">
+                <h3 className="text-lg font-bold text-red-500 mb-3">3,500+ Luxury 4K Clips</h3>
                 <p className="text-white">Cars, Jets, Yachts, Mansions, Watches & Lifestyle</p>
               </div>
-              <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-6 border border-red-500/20 text-center">
-                <h3 className="text-lg font-bold text-red-400 mb-3">15GB+ Resources</h3>
+              <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-6 border border-red-500/40 text-center">
+                <h3 className="text-lg font-bold text-red-500 mb-3">15GB+ Resources</h3>
                 <p className="text-white">Sound effects, popular songs & editing resources</p>
               </div>
             </div>
@@ -158,17 +158,17 @@ export default function ThemePageMasterclassPage() {
 
           {/* Results Section */}
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-red-400 mb-8">The Results</h2>
+            <h2 className="text-3xl font-bold text-white mb-8">The Results</h2>
             <div className="grid md:grid-cols-3 gap-8">
-              <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-6 border border-red-500/20">
+              <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-6 border border-red-500/40">
                 <div className="text-3xl font-bold text-red-500 mb-2">0 → 100K</div>
                 <p className="text-white">Followers with proven system</p>
               </div>
-              <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-6 border border-red-500/20">
+              <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-6 border border-red-500/40">
                 <div className="text-3xl font-bold text-red-500 mb-2">Viral</div>
                 <p className="text-white">Content that blows up in views</p>
               </div>
-              <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-6 border border-red-500/20">
+              <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-6 border border-red-500/40">
                 <div className="text-3xl font-bold text-red-500 mb-2">Income</div>
                 <p className="text-white">Generate real revenue streams</p>
               </div>
@@ -176,7 +176,7 @@ export default function ThemePageMasterclassPage() {
           </div>
 
           {/* CTA Section */}
-          <div className="text-center bg-black/30 backdrop-blur-sm rounded-2xl p-8 border border-red-500/20">
+          <div className="text-center bg-black/60 backdrop-blur-sm rounded-2xl p-8 border border-red-500/40">
             <h2 className="text-2xl font-bold text-white mb-4">
               Don't wait any longer to start your journey as a Faceless Content Creator
             </h2>

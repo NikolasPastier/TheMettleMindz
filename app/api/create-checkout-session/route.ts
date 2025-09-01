@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
           })),
         ),
         total_items: items.length.toString(),
+        product_ids: items.map((item: any) => item.id).join(","),
       },
       expires_at: Math.floor(Date.now() / 1000) + 30 * 60, // 30 minutes
     })

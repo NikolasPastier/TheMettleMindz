@@ -36,7 +36,7 @@ export default function ChampionsMindsetPage() {
           {/* Hero Section */}
           <div className="grid md:grid-cols-2 gap-12 items-center mb-16">
             <div className="space-y-6 slide-in-left">
-              <h1 className="text-4xl md:text-5xl font-bold text-red-500 leading-tight">Champion's Mindset</h1>
+              <h1 className="text-4xl md:text-5xl font-bold text-white leading-tight">Champion's Mindset</h1>
               <p className="text-lg text-white leading-relaxed">
                 Build unshakeable discipline. Kill distractions. Think like a champion. A concise guide to mental
                 toughness, dopamine control, and habits that compound in the gym, school, and business.
@@ -70,7 +70,7 @@ export default function ChampionsMindsetPage() {
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
                   <span className="text-3xl font-bold text-red-500">${product.price}</span>
-                  <span className="text-xl text-gray-400 line-through">${product.originalPrice}</span>
+                  <span className="text-xl text-white/60 line-through">${product.originalPrice}</span>
                   <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">61% OFF</span>
                 </div>
 
@@ -113,10 +113,10 @@ export default function ChampionsMindsetPage() {
 
           {/* What's Inside Section */}
           <div className="mb-16">
-            <h2 className="text-3xl font-bold text-red-400 mb-8 text-center">What's Inside</h2>
+            <h2 className="text-3xl font-bold text-white mb-8 text-center">What's Inside</h2>
             <div className="grid md:grid-cols-2 gap-8">
-              <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-6 border border-red-500/20">
-                <h3 className="text-xl font-bold text-red-400 mb-4">Mental Foundations</h3>
+              <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-6 border border-red-500/40">
+                <h3 className="text-xl font-bold text-red-500 mb-4">Mental Foundations</h3>
                 <ul className="space-y-2 text-white">
                   <li>• Cutting the dead weight (habits to drop + what to build)</li>
                   <li>• Long-term &gt; short-term pleasure (discipline over dopamine hits)</li>
@@ -125,8 +125,8 @@ export default function ChampionsMindsetPage() {
                 </ul>
               </div>
 
-              <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-6 border border-red-500/20">
-                <h3 className="text-xl font-bold text-red-400 mb-4">Daily Systems</h3>
+              <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-6 border border-red-500/40">
+                <h3 className="text-xl font-bold text-red-500 mb-4">Daily Systems</h3>
                 <ul className="space-y-2 text-white">
                   <li>• Micro-tasks, momentum, and daily systems</li>
                   <li>• Routines for sleep, training, clean eating, journaling</li>
@@ -139,18 +139,18 @@ export default function ChampionsMindsetPage() {
 
           {/* Benefits Section */}
           <div className="mb-16">
-            <h2 className="text-3xl font-bold text-red-400 mb-8 text-center">What You'll Achieve</h2>
+            <h2 className="text-3xl font-bold text-white mb-8 text-center">What You'll Achieve</h2>
             <div className="grid md:grid-cols-3 gap-6">
-              <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-6 border border-red-500/20 text-center">
-                <h3 className="text-lg font-bold text-red-400 mb-3">Unshakeable Discipline</h3>
+              <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-6 border border-red-500/40 text-center">
+                <h3 className="text-lg font-bold text-red-500 mb-3">Unshakeable Discipline</h3>
                 <p className="text-white">Build habits that stick and eliminate distractions</p>
               </div>
-              <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-6 border border-red-500/20 text-center">
-                <h3 className="text-lg font-bold text-red-400 mb-3">Mental Toughness</h3>
+              <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-6 border border-red-500/40 text-center">
+                <h3 className="text-lg font-bold text-red-500 mb-3">Mental Toughness</h3>
                 <p className="text-white">Develop resilience and champion mindset</p>
               </div>
-              <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-6 border border-red-500/20 text-center">
-                <h3 className="text-lg font-bold text-red-400 mb-3">Lasting Results</h3>
+              <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-6 border border-red-500/40 text-center">
+                <h3 className="text-lg font-bold text-red-500 mb-3">Lasting Results</h3>
                 <p className="text-white">60-day roadmap for sustainable transformation</p>
               </div>
             </div>
@@ -158,17 +158,17 @@ export default function ChampionsMindsetPage() {
 
           {/* Guarantee Section */}
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-red-400 mb-8">Our Promise</h2>
+            <h2 className="text-3xl font-bold text-white mb-8">Our Promise</h2>
             <div className="grid md:grid-cols-3 gap-8">
-              <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-6 border border-red-500/20">
+              <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-6 border border-red-500/40">
                 <div className="text-3xl font-bold text-red-500 mb-2">14-Day</div>
                 <p className="text-white">Money-back guarantee</p>
               </div>
-              <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-6 border border-red-500/20">
+              <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-6 border border-red-500/40">
                 <div className="text-3xl font-bold text-red-500 mb-2">Instant</div>
                 <p className="text-white">PDF download access</p>
               </div>
-              <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-6 border border-red-500/20">
+              <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-6 border border-red-500/40">
                 <div className="text-3xl font-bold text-red-500 mb-2">Compatible</div>
                 <p className="text-white">All devices supported</p>
               </div>
@@ -176,7 +176,7 @@ export default function ChampionsMindsetPage() {
           </div>
 
           {/* CTA Section */}
-          <div className="text-center bg-black/30 backdrop-blur-sm rounded-2xl p-8 border border-red-500/20">
+          <div className="text-center bg-black/60 backdrop-blur-sm rounded-2xl p-8 border border-red-500/40">
             <h2 className="text-2xl font-bold text-white mb-4">Transform Your Mindset, Transform Your Life</h2>
             <p className="text-white mb-6">If you're not getting value in 14 days, full refund — no questions asked.</p>
             <Button
