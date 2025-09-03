@@ -1,7 +1,9 @@
 "use client"
 
+import { useState } from "react"
+
 import type React from "react"
-import { createContext, useContext, useReducer, useEffect, useState } from "react"
+import { createContext, useContext, useReducer, useEffect } from "react"
 
 export interface CartItem {
   id: string
@@ -103,9 +105,7 @@ interface CartContextType extends CartState {
   removeItem: (id: string) => void
   updateQuantity: (id: string, quantity: number) => void
   clearCart: () => void
-  isPopupOpen: boolean
-  showPopup: () => void
-  hidePopup: () => void
+  isAnimating: boolean
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
@@ -117,7 +117,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     itemCount: 0,
   })
 
-  const [isPopupOpen, setIsPopupOpen] = useState(false)
+  const [isAnimating, setIsAnimating] = useState(false)
 
   useEffect(() => {
     const savedCart = localStorage.getItem("cart")
@@ -137,7 +137,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const addItem = (item: Omit<CartItem, "quantity">) => {
     dispatch({ type: "ADD_ITEM", payload: item })
-    setIsPopupOpen(true)
+    setIsAnimating(true)
+    setTimeout(() => setIsAnimating(false), 600)
   }
 
   const removeItem = (id: string) => {
@@ -152,9 +153,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: "CLEAR_CART" })
   }
 
-  const showPopup = () => setIsPopupOpen(true)
-  const hidePopup = () => setIsPopupOpen(false)
-
   return (
     <CartContext.Provider
       value={{
@@ -163,9 +161,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         removeItem,
         updateQuantity,
         clearCart,
-        isPopupOpen,
-        showPopup,
-        hidePopup,
+        isAnimating,
       }}
     >
       {children}

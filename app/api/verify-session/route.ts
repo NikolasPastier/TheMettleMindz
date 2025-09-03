@@ -1,8 +1,16 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { stripe } from "@/lib/stripe"
+import { stripe } from "@/lib/stripe-server"
 
 export async function GET(request: NextRequest) {
   try {
+    if (!stripe) {
+      console.error("Stripe is not configured. Missing STRIPE_SECRET_KEY environment variable.")
+      return NextResponse.json(
+        { error: "Payment verification is currently unavailable. Please contact support." },
+        { status: 503 },
+      )
+    }
+
     const { searchParams } = new URL(request.url)
     const sessionId = searchParams.get("session_id")
 

@@ -116,10 +116,11 @@ export default function SuccessPage() {
 
   const getDownloadLink = (itemId: string) => {
     const downloadLinks: Record<string, string> = {
-      "champions-mindset": "/downloads/champions-mindset.pdf",
+      "champions-mindset": "https://drive.google.com/uc?export=download&id=1-hXEHZ26npEmE9TioMBZNAQdlPeGBNIE",
       "theme-page-masterclass": "/course/theme-page-masterclass", // Link to course page instead of download
-      "theme-page-masterclass-ebook": "/downloads/theme-page-masterclass-ebook.pdf",
-      "viral-clip-pack-bundle": "/downloads/viral-clip-pack-bundle.zip",
+      "theme-page-masterclass-ebook":
+        "https://drive.google.com/uc?export=download&id=1UEEeyznbNAlU2ryw-nPVxL6FNrEeiUjO",
+      "viral-clip-pack-bundle": "https://drive.google.com/uc?export=download&id=VIRAL_CLIP_PACK_FILE_ID",
     }
     return downloadLinks[itemId] || `/downloads/${itemId}.pdf`
   }
@@ -128,8 +129,10 @@ export default function SuccessPage() {
     const descriptions: Record<string, string> = {
       "champions-mindset": "Complete e-book with bonus materials and 60-day roadmap",
       "theme-page-masterclass": "Video course with templates and resources - Access your course now!",
-      "theme-page-masterclass-ebook": "E-book version with comprehensive guide and resources",
-      "viral-clip-pack-bundle": "100+ viral clips with editing templates",
+      "theme-page-masterclass-ebook":
+        "E-book version with comprehensive guide and templates for viral content creation",
+      "viral-clip-pack-bundle":
+        "Complete collection of viral video clips, templates, and editing resources for engaging social media content",
     }
     return descriptions[itemId] || "Digital product with instant access"
   }
@@ -248,7 +251,10 @@ export default function SuccessPage() {
                             {getActionText(item.id)}
                           </Link>
                         ) : (
-                          <a href={getDownloadLink(item.id)} download>
+                          <a
+                            href={getDownloadLink(item.id)}
+                            download={item.id === "champions-mindset" ? undefined : true}
+                          >
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path
                                 strokeLinecap="round"

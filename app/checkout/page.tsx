@@ -7,29 +7,165 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AnimatedElement } from "@/components/animated-element"
+import { Input } from "@/components/ui/input"
+import { createClient } from "@/lib/supabase/client"
 import Image from "next/image"
 import Link from "next/link"
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 
 export default function CheckoutPage() {
   const { items, total, itemCount } = useCart()
   const { redirectToCheckout, isLoading, error, clearError } = useCheckout()
   const router = useRouter()
+  const searchParams = useSearchParams()
 
-  // Redirect to cart if no items
+  const [user, setUser] = useState<any>(null)
+  const [authLoading, setAuthLoading] = useState(true)
+
+  const [discountCode, setDiscountCode] = useState("")
+  const [discountApplied, setDiscountApplied] = useState(false)
+  const [discountAmount, setDiscountAmount] = useState(0)
+  const [discountError, setDiscountError] = useState("")
+  const [isValidatingDiscount, setIsValidatingDiscount] = useState(false)
+
   useEffect(() => {
-    if (items.length === 0) {
+    const checkAuth = async () => {
+      const supabase = createClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      setUser(user)
+      setAuthLoading(false)
+
+      // If no user and not redirected from auth, redirect to login with return URL
+      if (!user && !searchParams.get("from")) {
+        const returnUrl = encodeURIComponent("/checkout")
+        router.push(`/auth/login?returnTo=${returnUrl}`)
+      }
+    }
+
+    checkAuth()
+  }, [router, searchParams])
+
+  useEffect(() => {
+    if (items.length === 0 && !authLoading) {
       router.push("/cart")
     }
-  }, [items.length, router])
+  }, [items.length, router, authLoading])
 
   useEffect(() => {
     clearError()
   }, [items, clearError])
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen relative flex items-center justify-center">
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="/images/black-marble-background.jpg"
+            alt="Black Marble Background"
+            fill
+            className="object-cover object-center"
+          />
+          <div className="absolute inset-0 bg-black/60" />
+        </div>
+        <div className="relative z-10 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4" />
+          <p className="text-white">Checking authentication...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen relative flex items-center justify-center">
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="/images/black-marble-background.jpg"
+            alt="Black Marble Background"
+            fill
+            className="object-cover object-center"
+          />
+          <div className="absolute inset-0 bg-black/60" />
+        </div>
+        <div className="relative z-10 max-w-md mx-auto text-center p-6">
+          <Card className="bg-black/40 border-white/20 backdrop-blur-sm rounded-xl">
+            <CardContent className="p-6">
+              <h2 className="text-xl font-bold text-white mb-4">Authentication Required</h2>
+              <p className="text-gray-300 mb-6">Please sign in to complete your purchase.</p>
+              <div className="space-y-3">
+                <Button asChild className="w-full bg-red-600 hover:bg-red-700 text-white">
+                  <Link href={`/auth/login?returnTo=${encodeURIComponent("/checkout")}`}>Sign In</Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="w-full border-white/20 text-white hover:bg-white/10 bg-transparent"
+                >
+                  <Link href={`/auth/register?returnTo=${encodeURIComponent("/checkout")}`}>Create Account</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
+  const validateDiscountCode = async () => {
+    if (!discountCode.trim()) {
+      setDiscountError("Please enter a discount code")
+      return
+    }
+
+    setIsValidatingDiscount(true)
+    setDiscountError("")
+
+    try {
+      const response = await fetch("/api/validate-discount", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          code: discountCode.trim().toUpperCase(),
+          total: total,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.valid) {
+        setDiscountApplied(true)
+        setDiscountAmount(data.discountAmount)
+        setDiscountError("")
+      } else {
+        setDiscountError(data.message || "Invalid discount code")
+        setDiscountApplied(false)
+        setDiscountAmount(0)
+      }
+    } catch (error) {
+      setDiscountError("Failed to validate discount code")
+      setDiscountApplied(false)
+      setDiscountAmount(0)
+    } finally {
+      setIsValidatingDiscount(false)
+    }
+  }
+
+  const removeDiscount = () => {
+    setDiscountCode("")
+    setDiscountApplied(false)
+    setDiscountAmount(0)
+    setDiscountError("")
+  }
+
+  const finalTotal = Math.max(0, total - discountAmount)
+
   const handleCheckout = async () => {
-    await redirectToCheckout(items)
+    await redirectToCheckout(items, discountApplied ? { code: discountCode, amount: discountAmount } : null)
   }
 
   if (items.length === 0) {
@@ -59,6 +195,7 @@ export default function CheckoutPage() {
                 </Link>
               </Button>
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">Secure Checkout</h1>
+              <div className="ml-auto text-sm text-gray-300">Signed in as {user.email}</div>
             </div>
           </AnimatedElement>
 
@@ -175,6 +312,62 @@ export default function CheckoutPage() {
                       <span>${total.toFixed(2)}</span>
                     </div>
 
+                    <div className="space-y-3 p-4 bg-black/20 rounded-lg border border-white/10">
+                      <h3 className="text-white font-medium text-sm">Discount Code</h3>
+                      {!discountApplied ? (
+                        <div className="space-y-2">
+                          <div className="flex gap-2">
+                            <Input
+                              type="text"
+                              placeholder="Enter discount code"
+                              value={discountCode}
+                              onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
+                              className="bg-black/40 border-white/20 text-white placeholder:text-gray-400 text-sm"
+                              disabled={isValidatingDiscount}
+                            />
+                            <Button
+                              onClick={validateDiscountCode}
+                              disabled={isValidatingDiscount || !discountCode.trim()}
+                              size="sm"
+                              className="bg-red-600 hover:bg-red-700 text-white px-4"
+                            >
+                              {isValidatingDiscount ? "..." : "Apply"}
+                            </Button>
+                          </div>
+                          {discountError && <p className="text-red-400 text-xs">{discountError}</p>}
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <svg
+                              className="w-4 h-4 text-green-400"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span className="text-green-400 text-sm font-medium">{discountCode}</span>
+                          </div>
+                          <Button
+                            onClick={removeDiscount}
+                            variant="ghost"
+                            size="sm"
+                            className="text-gray-400 hover:text-white h-auto p-1"
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+
+                    {discountApplied && (
+                      <div className="flex justify-between text-green-400 text-sm md:text-base">
+                        <span>Discount ({discountCode})</span>
+                        <span>-${discountAmount.toFixed(2)}</span>
+                      </div>
+                    )}
+
                     <div className="flex justify-between text-gray-300 text-sm md:text-base">
                       <span>Processing Fee</span>
                       <span className="text-green-400">FREE</span>
@@ -189,7 +382,14 @@ export default function CheckoutPage() {
 
                     <div className="flex justify-between text-white font-bold text-lg md:text-xl">
                       <span>Total</span>
-                      <span>${total.toFixed(2)}</span>
+                      <div className="text-right">
+                        {discountApplied && total !== finalTotal && (
+                          <div className="text-sm text-gray-400 line-through">${total.toFixed(2)}</div>
+                        )}
+                        <span className={finalTotal === 0 ? "text-green-400" : ""}>
+                          {finalTotal === 0 ? "FREE" : `$${finalTotal.toFixed(2)}`}
+                        </span>
+                      </div>
                     </div>
 
                     {error && (
@@ -246,8 +446,12 @@ export default function CheckoutPage() {
                             />
                           </svg>
                           <span className="truncate">
-                            <span className="hidden sm:inline">Complete Purchase - </span>
-                            <span className="sm:hidden">Buy Now - </span>${total.toFixed(2)}
+                            <span className="hidden sm:inline">
+                              {finalTotal === 0 ? "Get Free Products" : `Complete Purchase - $${finalTotal.toFixed(2)}`}
+                            </span>
+                            <span className="sm:hidden">
+                              {finalTotal === 0 ? "Get Free" : `Buy Now - $${finalTotal.toFixed(2)}`}
+                            </span>
                           </span>
                         </div>
                       )}

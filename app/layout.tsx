@@ -9,7 +9,6 @@ import Footer from "@/components/footer"
 import { CartProvider } from "@/contexts/cart-context"
 import { AuthProvider } from "@/contexts/auth-context"
 import AnimatedGradientBackground from "@/components/animated-gradient-background"
-import { CartPopup } from "@/components/cart-popup"
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -47,7 +46,6 @@ export default function RootLayout({
                 <Footer />
               </Suspense>
             </div>
-            <CartPopup />
           </CartProvider>
         </AuthProvider>
         <Analytics />

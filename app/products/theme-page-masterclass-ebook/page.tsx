@@ -1,19 +1,25 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/contexts/cart-context"
+import { useRouter } from "next/navigation"
 
 export default function ThemePageMasterclassEbookPage() {
   const { addItem } = useCart()
   const [isAdding, setIsAdding] = useState(false)
+  const router = useRouter()
+
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
 
   const product = {
     id: "theme-page-masterclass-ebook",
     title: "Theme Page Masterclass E-Book Version",
-    price: 29.0,
-    originalPrice: 49.0,
+    price: 4.99,
+    originalPrice: 9.99,
     image: "/images/theme-page-ebook.png",
     category: "E-Book",
   }
@@ -22,6 +28,11 @@ export default function ThemePageMasterclassEbookPage() {
     setIsAdding(true)
     addItem(product)
     setTimeout(() => setIsAdding(false), 1000)
+  }
+
+  const handleBuyNow = () => {
+    addItem(product)
+    router.push("/checkout")
   }
 
   return (
@@ -68,7 +79,7 @@ export default function ThemePageMasterclassEbookPage() {
                 <div className="flex items-center gap-4">
                   <span className="text-3xl font-bold text-red-500">${product.price}</span>
                   <span className="text-xl text-white/60 line-through">${product.originalPrice}</span>
-                  <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">41% OFF</span>
+                  <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">50% OFF</span>
                 </div>
 
                 <div className="flex gap-4">
@@ -80,6 +91,7 @@ export default function ThemePageMasterclassEbookPage() {
                     {isAdding ? "Adding..." : "Add to Cart"}
                   </Button>
                   <Button
+                    onClick={handleBuyNow}
                     variant="outline"
                     className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white px-8 py-3 rounded-lg font-bold text-lg bg-transparent"
                   >
@@ -184,12 +196,11 @@ export default function ThemePageMasterclassEbookPage() {
               every step inside, success isn't just possible — it's guaranteed.
             </p>
             <Button
-              onClick={handleAddToCart}
-              disabled={isAdding}
+              onClick={handleBuyNow}
               size="lg"
               className="bg-red-500 hover:bg-red-600 text-white px-12 py-4 rounded-lg font-bold text-xl transition-all duration-300 hover:scale-105"
             >
-              {isAdding ? "Adding to Cart..." : "Get Instant Access - $29"}
+              Get Instant Access - $4.99
             </Button>
             <p className="text-sm text-white/60 mt-4">
               Instant PDF download • Compatible with all devices • 30-day money-back guarantee

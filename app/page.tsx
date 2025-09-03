@@ -1,9 +1,57 @@
+"use client"
+
+import type React from "react"
+
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { AnimatedElement } from "@/components/animated-element"
+import { useState } from "react"
 
 export default function ChampionMindsetLanding() {
+  const [email, setEmail] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const [isSuccess, setIsSuccess] = useState(false)
+  const [message, setMessage] = useState("")
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setMessage("")
+
+    try {
+      const response = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setIsSuccess(true)
+        setMessage(data.message)
+        setEmail("")
+      } else {
+        setMessage(data.error || "Something went wrong")
+      }
+    } catch (error) {
+      setMessage("Network error. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleDownloadWallpaper = () => {
+    window.open(
+      process.env.NEXT_PUBLIC_WALLPAPER_PACK_URL ||
+        "https://drive.google.com/drive/folders/16eDnU8h_yHI6lzxwNGHJvaZ7OjxLc0pb?usp=drive_link",
+      "_blank",
+    )
+  }
+
   const products = [
     {
       id: "champions-mindset",
@@ -11,7 +59,7 @@ export default function ChampionMindsetLanding() {
       type: "E-book",
       description: "Build unshakeable discipline. Kill distractions. Think like a champion.",
       href: "/products/champions-mindset",
-      price: "$19.00",
+      price: "$9.99",
       image: "/images/champion-mindset-product.png",
     },
     {
@@ -20,7 +68,7 @@ export default function ChampionMindsetLanding() {
       type: "Video Course",
       description: "Learn how to build profitable faceless Instagram pages from 0 to 100K followers.",
       href: "/products/theme-page-masterclass",
-      price: "$97.00",
+      price: "$19.99",
       image: "/images/theme-page-masterclass.png",
     },
     {
@@ -29,7 +77,7 @@ export default function ChampionMindsetLanding() {
       type: "Content Bundle",
       description: "4,800+ premium motivational and luxury clips that helped us grow from 0 to 100K followers.",
       href: "/products/viral-clip-pack-bundle",
-      price: "$47.00",
+      price: "$14.99",
       image: "/images/viral-clip-pack.png",
     },
     {
@@ -39,7 +87,7 @@ export default function ChampionMindsetLanding() {
       description:
         "Complete written guide covering 10 comprehensive chapters on building successful faceless theme pages.",
       href: "/products/theme-page-masterclass-ebook",
-      price: "$29.00",
+      price: "$4.99",
       image: "/images/theme-page-ebook.png",
     },
   ]
@@ -299,49 +347,55 @@ export default function ChampionMindsetLanding() {
             <AnimatedElement animationClass="animate-slide-up-2">
               <p className="text-white/80 text-sm sm:text-base md:text-lg mb-6 md:mb-8 max-w-2xl mx-auto">
                 Get exclusive content, motivation tips, and be the first to know about new products and special offers.
+                <br />
+                <span className="text-red-300 font-semibold">
+                  Sign up now and get 2 FREE gifts: A habit tracker and motivational wallpaper pack!
+                </span>
               </p>
             </AnimatedElement>
 
             <AnimatedElement animationClass="animate-slide-up-3">
-              <form className="max-w-md mx-auto">
-                <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
-                  <input
-                    type="email"
-                    placeholder="Enter your email address"
-                    className="flex-1 px-3 py-2 sm:px-4 sm:py-3 bg-black/50 border border-white/20 rounded-lg md:rounded-xl text-white placeholder-white/60 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all duration-300 text-sm sm:text-base"
-                    required
-                  />
+              {!isSuccess ? (
+                <form onSubmit={handleNewsletterSubmit} className="max-w-md mx-auto">
+                  <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Enter your email address"
+                      className="flex-1 px-3 py-2 sm:px-4 sm:py-3 bg-black/50 border border-white/20 rounded-lg md:rounded-xl text-white placeholder-white/60 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all duration-300 text-sm sm:text-base"
+                      required
+                      disabled={isLoading}
+                    />
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="bg-red-600 hover:bg-red-700 disabled:bg-red-800 text-white font-bold py-2 px-4 sm:py-3 sm:px-6 rounded-lg md:rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg whitespace-nowrap text-sm sm:text-base disabled:transform-none disabled:cursor-not-allowed"
+                    >
+                      {isLoading ? "Subscribing..." : "Subscribe"}
+                    </button>
+                  </div>
+
+                  <p className="text-white/60 text-xs sm:text-sm mt-3 md:mt-4">
+                    No spam, unsubscribe at any time. Your email is safe with us.
+                  </p>
+                </form>
+              ) : (
+                <div className="max-w-md mx-auto">
+                  <div className="text-green-400 font-semibold text-lg mb-4">{message}</div>
                   <button
-                    type="submit"
-                    className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 sm:py-3 sm:px-6 rounded-lg md:rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg whitespace-nowrap text-sm sm:text-base"
+                    onClick={handleDownloadWallpaper}
+                    className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg"
                   >
-                    Subscribe
+                    Download Free Gifts
                   </button>
+                  <p className="text-white/60 text-sm mt-3">
+                    Check your email for the habit tracker and more exclusive content!
+                  </p>
                 </div>
+              )}
 
-                <p className="text-white/60 text-xs sm:text-sm mt-3 md:mt-4">
-                  No spam, unsubscribe at any time. Your email is safe with us.
-                </p>
-              </form>
-            </AnimatedElement>
-
-            <AnimatedElement animationClass="animate-slide-up-4">
-              <div className="flex items-center justify-center gap-4 md:gap-6 mt-6 md:mt-8">
-                <div className="text-center">
-                  <div className="text-lg sm:text-xl md:text-2xl font-bold text-red-500">5M+</div>
-                  <div className="text-white/80 text-xs sm:text-sm">People Inspired</div>
-                </div>
-                <div className="w-px h-6 md:h-8 bg-white/20"></div>
-                <div className="text-center">
-                  <div className="text-lg sm:text-xl md:text-2xl font-bold text-red-500">100K+</div>
-                  <div className="text-white/80 text-xs sm:text-sm">Followers</div>
-                </div>
-                <div className="w-px h-6 md:h-8 bg-white/20"></div>
-                <div className="text-center">
-                  <div className="text-lg sm:text-xl md:text-2xl font-bold text-red-500">20M+</div>
-                  <div className="text-white/80 text-xs sm:text-sm">Views</div>
-                </div>
-              </div>
+              {message && !isSuccess && <p className="text-red-400 text-sm mt-3">{message}</p>}
             </AnimatedElement>
           </div>
         </div>

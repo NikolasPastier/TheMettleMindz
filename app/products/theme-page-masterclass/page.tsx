@@ -3,17 +3,23 @@
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/contexts/cart-context"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 
 export default function ThemePageMasterclassPage() {
   const { addItem } = useCart()
   const [isAdding, setIsAdding] = useState(false)
+  const router = useRouter()
+
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
 
   const product = {
     id: "theme-page-masterclass",
     name: "Theme Page Masterclass",
-    price: 97.0,
-    originalPrice: 197.0,
+    price: 19.99,
+    originalPrice: 24.99,
     image: "/images/theme-page-masterclass.png",
   }
 
@@ -27,6 +33,17 @@ export default function ThemePageMasterclassPage() {
       category: "Course", // Add required category field
     })
     setTimeout(() => setIsAdding(false), 1000)
+  }
+
+  const handleBuyNow = () => {
+    addItem({
+      id: product.id,
+      title: product.name,
+      price: product.price,
+      image: product.image,
+      category: "Course",
+    })
+    router.push("/checkout")
   }
 
   return (
@@ -71,7 +88,7 @@ export default function ThemePageMasterclassPage() {
                 <div className="flex items-center gap-4">
                   <span className="text-3xl font-bold text-red-500">${product.price}</span>
                   <span className="text-xl text-white/60 line-through">${product.originalPrice}</span>
-                  <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">51% OFF</span>
+                  <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">20% OFF</span>
                 </div>
 
                 <div className="flex gap-4">
@@ -83,6 +100,7 @@ export default function ThemePageMasterclassPage() {
                     {isAdding ? "Adding..." : "Add to Cart"}
                   </Button>
                   <Button
+                    onClick={handleBuyNow}
                     variant="outline"
                     className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white px-8 py-3 rounded-lg font-bold text-lg bg-transparent"
                   >
@@ -184,12 +202,11 @@ export default function ThemePageMasterclassPage() {
               Your faceless Instagram empire starts today. Get the complete system that built our 100K+ following.
             </p>
             <Button
-              onClick={handleAddToCart}
-              disabled={isAdding}
+              onClick={handleBuyNow}
               size="lg"
               className="bg-red-500 hover:bg-red-600 text-white px-12 py-4 rounded-lg font-bold text-xl transition-all duration-300 hover:scale-105"
             >
-              {isAdding ? "Adding to Cart..." : "Get Creator Blueprint - $97"}
+              Get Creator Blueprint - $19.99
             </Button>
           </div>
         </div>

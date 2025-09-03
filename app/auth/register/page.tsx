@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { AnimatedElement } from "@/components/animated-element"
 import Image from "next/image"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useState } from "react"
 
 export default function RegisterPage() {
@@ -21,6 +21,9 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  const returnTo = searchParams.get("returnTo") || "/account"
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -45,7 +48,7 @@ export default function RegisterPage() {
         email,
         password,
         options: {
-          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard`,
+          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}${returnTo}`,
           data: {
             full_name: fullName,
           },
@@ -89,7 +92,11 @@ export default function RegisterPage() {
           <Card className="bg-black/40 border-white/20 backdrop-blur-sm rounded-xl md:rounded-2xl">
             <CardHeader className="text-center">
               <CardTitle className="text-xl md:text-2xl text-white">Create Account</CardTitle>
-              <CardDescription className="text-white/80">Sign up to get started with your dashboard</CardDescription>
+              <CardDescription className="text-white/80">
+                {returnTo === "/checkout"
+                  ? "Create an account to complete your purchase"
+                  : "Sign up to get started with your dashboard"}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleRegister} className="space-y-4">
@@ -171,7 +178,10 @@ export default function RegisterPage() {
               </form>
               <div className="mt-6 text-center text-sm text-white/80">
                 Already have an account?{" "}
-                <Link href="/auth/login" className="text-red-400 hover:text-red-300 underline font-medium">
+                <Link
+                  href={`/auth/login${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`}
+                  className="text-red-400 hover:text-red-300 underline font-medium"
+                >
                   Sign in
                 </Link>
               </div>

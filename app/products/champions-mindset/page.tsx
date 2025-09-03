@@ -3,17 +3,23 @@
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/contexts/cart-context"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 
 export default function ChampionsMindsetPage() {
   const { addItem } = useCart()
   const [isAdding, setIsAdding] = useState(false)
+  const router = useRouter()
+
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
 
   const product = {
     id: "champions-mindset",
     name: "Champion's Mindset",
-    price: 19.0,
-    originalPrice: 49.0,
+    price: 9.99,
+    originalPrice: 19.99,
     image: "/images/champion-mindset-product.png",
   }
 
@@ -27,6 +33,17 @@ export default function ChampionsMindsetPage() {
       category: "E-book",
     })
     setTimeout(() => setIsAdding(false), 1000)
+  }
+
+  const handleBuyNow = () => {
+    addItem({
+      id: product.id,
+      title: product.name,
+      price: product.price,
+      image: product.image,
+      category: "E-book",
+    })
+    router.push("/checkout")
   }
 
   return (
@@ -71,7 +88,7 @@ export default function ChampionsMindsetPage() {
                 <div className="flex items-center gap-4">
                   <span className="text-3xl font-bold text-red-500">${product.price}</span>
                   <span className="text-xl text-white/60 line-through">${product.originalPrice}</span>
-                  <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">61% OFF</span>
+                  <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">50% OFF</span>
                 </div>
 
                 <div className="flex gap-4">
@@ -83,6 +100,7 @@ export default function ChampionsMindsetPage() {
                     {isAdding ? "Adding..." : "Add to Cart"}
                   </Button>
                   <Button
+                    onClick={handleBuyNow}
                     variant="outline"
                     className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white px-8 py-3 rounded-lg font-bold text-lg bg-transparent"
                   >
@@ -180,12 +198,11 @@ export default function ChampionsMindsetPage() {
             <h2 className="text-2xl font-bold text-white mb-4">Transform Your Mindset, Transform Your Life</h2>
             <p className="text-white mb-6">If you're not getting value in 14 days, full refund — no questions asked.</p>
             <Button
-              onClick={handleAddToCart}
-              disabled={isAdding}
+              onClick={handleBuyNow}
               size="lg"
               className="bg-red-500 hover:bg-red-600 text-white px-12 py-4 rounded-lg font-bold text-xl transition-all duration-300 hover:scale-105"
             >
-              {isAdding ? "Adding to Cart..." : "Get Instant Access - $19"}
+              Get Instant Access - $9.99
             </Button>
           </div>
         </div>

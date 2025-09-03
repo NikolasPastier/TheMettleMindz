@@ -1,19 +1,25 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/contexts/cart-context"
+import { useRouter } from "next/navigation"
 
 export default function ViralClipPackBundlePage() {
   const { addItem } = useCart()
   const [isAdding, setIsAdding] = useState(false)
+  const router = useRouter()
+
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
 
   const product = {
     id: "viral-clip-pack-bundle",
     title: "Viral Clip Pack Bundle",
-    price: 47.0,
-    originalPrice: 97.0,
+    price: 14.99,
+    originalPrice: 19.99,
     image: "/images/viral-clip-pack.png",
     category: "Digital Product",
   }
@@ -22,6 +28,11 @@ export default function ViralClipPackBundlePage() {
     setIsAdding(true)
     addItem(product)
     setTimeout(() => setIsAdding(false), 1000)
+  }
+
+  const handleBuyNow = () => {
+    addItem(product)
+    router.push("/checkout")
   }
 
   return (
@@ -66,7 +77,7 @@ export default function ViralClipPackBundlePage() {
                 <div className="flex items-center gap-4">
                   <span className="text-3xl font-bold text-red-500">${product.price}</span>
                   <span className="text-xl text-white/60 line-through">${product.originalPrice}</span>
-                  <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">52% OFF</span>
+                  <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">25% OFF</span>
                 </div>
 
                 <div className="flex gap-4">
@@ -78,6 +89,7 @@ export default function ViralClipPackBundlePage() {
                     {isAdding ? "Adding..." : "Add to Cart"}
                   </Button>
                   <Button
+                    onClick={handleBuyNow}
                     variant="outline"
                     className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white px-8 py-3 rounded-lg font-bold text-lg bg-transparent"
                   >
@@ -187,12 +199,11 @@ export default function ViralClipPackBundlePage() {
               Save tens of hours gathering clips and resources. Get everything you need in one complete bundle.
             </p>
             <Button
-              onClick={handleAddToCart}
-              disabled={isAdding}
+              onClick={handleBuyNow}
               size="lg"
               className="bg-red-500 hover:bg-red-600 text-white px-12 py-4 rounded-lg font-bold text-xl transition-all duration-300 hover:scale-105"
             >
-              {isAdding ? "Adding to Cart..." : "Get Instant Access - $47"}
+              Get Instant Access - $14.99
             </Button>
             <p className="text-sm text-white/60 mt-4">
               *themettleminds does not own any of the material included in the offer

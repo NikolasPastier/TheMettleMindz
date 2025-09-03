@@ -5,10 +5,9 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { useAuth } from "@/contexts/auth-context"
 import { LogOut, Download, ShoppingBag, User, BookOpen, Play, Calendar } from "lucide-react"
 import { AnimatedElement } from "@/components/animated-element"
-import { createBrowserClient } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/client"
 import Image from "next/image"
 import Link from "next/link"
 
@@ -22,31 +21,45 @@ interface Purchase {
 }
 
 export default function AccountPage() {
-  const { user, logout, isLoading } = useAuth()
+  const [user, setUser] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const [purchases, setPurchases] = useState<Purchase[]>([])
   const [loadingPurchases, setLoadingPurchases] = useState(true)
   const router = useRouter()
-  const supabase = createBrowserClient()
+  const supabase = createClient()
 
   useEffect(() => {
-    if (!isLoading && !user) {
-      router.push("/auth")
+    const checkAuth = async () => {
+      try {
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser()
+        if (error || !user) {
+          router.push("/auth/login")
+          return
+        }
+        setUser(user)
+        await fetchPurchases(user.id)
+      } catch (error) {
+        console.error("Auth check error:", error)
+        router.push("/auth/login")
+      } finally {
+        setIsLoading(false)
+      }
     }
-  }, [user, isLoading, router])
 
-  useEffect(() => {
-    if (user) {
-      fetchPurchases()
-    }
-  }, [user])
+    checkAuth()
+  }, [router])
 
-  const fetchPurchases = async () => {
+  const fetchPurchases = async (userId: string) => {
     try {
       const { data, error } = await supabase
         .from("purchases")
         .select("*")
-        .eq("status", "completed")
-        .order("purchased_at", { ascending: false })
+        .eq("user_id", userId)
+        .eq("status", "paid")
+        .order("created_at", { ascending: false })
 
       if (error) {
         console.error("Error fetching purchases:", error)
@@ -60,9 +73,14 @@ export default function AccountPage() {
     }
   }
 
-  const handleLogout = () => {
-    logout()
-    router.push("/")
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut()
+      router.push("/")
+    } catch (error) {
+      console.error("Logout error:", error)
+      router.push("/")
+    }
   }
 
   const getProductDetails = (productId: string) => {
@@ -160,17 +178,13 @@ export default function AccountPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <label className="text-sm text-white/60">Name</label>
-                  <p className="text-white font-medium text-base sm:text-lg">{user.name}</p>
-                </div>
-                <div>
                   <label className="text-sm text-white/60">Email</label>
                   <p className="text-white font-medium text-base sm:text-lg">{user.email}</p>
                 </div>
                 <div>
                   <label className="text-sm text-white/60">Member Since</label>
                   <p className="text-white font-medium text-base sm:text-lg">
-                    {new Date(Number.parseInt(user.id)).toLocaleDateString()}
+                    {new Date(user.created_at).toLocaleDateString()}
                   </p>
                 </div>
                 <Button
@@ -210,7 +224,8 @@ export default function AccountPage() {
                               <div className="flex items-center gap-2 mt-1">
                                 <Badge className="bg-red-600/20 text-red-400 border-red-500/40">{details.type}</Badge>
                                 <span className="text-xs text-white/60">
-                                  Purchased {new Date(purchase.purchased_at).toLocaleDateString()}
+                                  Purchased{" "}
+                                  {new Date(purchase.purchased_at || purchase.created_at).toLocaleDateString()}
                                 </span>
                               </div>
                             </div>
@@ -280,7 +295,7 @@ export default function AccountPage() {
                             </div>
                             <p className="text-xs text-white/50 mt-1">
                               <Calendar className="h-3 w-3 inline mr-1" />
-                              {new Date(purchase.purchased_at).toLocaleDateString()}
+                              {new Date(purchase.purchased_at || purchase.created_at).toLocaleDateString()}
                             </p>
                           </div>
                           <Button
