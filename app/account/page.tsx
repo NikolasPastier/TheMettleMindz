@@ -190,7 +190,7 @@ export default function AccountPage() {
                 <Button
                   onClick={handleLogout}
                   variant="outline"
-                  className="w-full border-red-500/40 text-white hover:bg-red-600/20 hover:border-red-500/60 bg-transparent transition-all duration-300"
+                  className="w-full border-red-500/40 text-white hover:bg-red-600/20 hover:border-red-500/60 hover:text-white bg-transparent transition-all duration-300 text-center"
                 >
                   <LogOut className="h-4 w-4 mr-2" />
                   Sign Out
@@ -233,7 +233,7 @@ export default function AccountPage() {
                           <Button
                             asChild
                             size="sm"
-                            className="w-full bg-red-600 hover:bg-red-700 text-white transition-all duration-300"
+                            className="w-full bg-red-600 hover:bg-red-700 text-white hover:text-white transition-all duration-300 text-center"
                           >
                             <Link href={details.accessUrl}>
                               <Play className="h-4 w-4 mr-2" />
@@ -251,7 +251,7 @@ export default function AccountPage() {
                     <Button
                       asChild
                       size="sm"
-                      className="bg-red-600 hover:bg-red-700 text-white transition-all duration-300"
+                      className="bg-red-600 hover:bg-red-700 text-white hover:text-white transition-all duration-300 text-center"
                     >
                       <Link href="/products/theme-page-masterclass">Browse Courses</Link>
                     </Button>
@@ -301,7 +301,7 @@ export default function AccountPage() {
                           <Button
                             asChild
                             size="sm"
-                            className="ml-2 bg-red-600 hover:bg-red-700 text-white transition-all duration-300"
+                            className="ml-2 bg-red-600 hover:bg-red-700 text-white hover:text-white transition-all duration-300 text-center"
                           >
                             <Link href={details.accessUrl}>
                               <Download className="h-4 w-4" />
@@ -317,7 +317,7 @@ export default function AccountPage() {
                     <p className="text-white/60 mb-4">No purchases yet</p>
                     <Button
                       onClick={() => router.push("/#featured-products")}
-                      className="bg-red-600 hover:bg-red-700 text-white transition-all duration-300 transform hover:scale-105"
+                      className="bg-red-600 hover:bg-red-700 text-white hover:text-white transition-all duration-300 transform hover:scale-105 text-center"
                     >
                       Browse Products
                     </Button>
@@ -340,14 +340,14 @@ export default function AccountPage() {
                   <Button
                     onClick={() => router.push("/#featured-products")}
                     variant="outline"
-                    className="border-red-500/40 text-white hover:bg-red-600/20 hover:border-red-500/60 bg-transparent transition-all duration-300"
+                    className="border-red-500/40 text-white hover:bg-red-600/20 hover:border-red-500/60 hover:text-white bg-transparent transition-all duration-300 text-center"
                   >
                     Browse Products
                   </Button>
                   <Button
                     onClick={() => router.push("/cart")}
                     variant="outline"
-                    className="border-red-500/40 text-white hover:bg-red-600/20 hover:border-red-500/60 bg-transparent transition-all duration-300"
+                    className="border-red-500/40 text-white hover:bg-red-600/20 hover:border-red-500/60 hover:text-white bg-transparent transition-all duration-300 text-center"
                   >
                     View Cart
                   </Button>
@@ -355,7 +355,7 @@ export default function AccountPage() {
                     <Button
                       asChild
                       variant="outline"
-                      className="border-red-500/40 text-white hover:bg-red-600/20 hover:border-red-500/60 bg-transparent transition-all duration-300"
+                      className="border-red-500/40 text-white hover:bg-red-600/20 hover:border-red-500/60 hover:text-white bg-transparent transition-all duration-300 text-center"
                     >
                       <Link href="/course/theme-page-masterclass">My Courses</Link>
                     </Button>
@@ -363,7 +363,7 @@ export default function AccountPage() {
                   <Button
                     onClick={() => router.push("/")}
                     variant="outline"
-                    className="border-red-500/40 text-white hover:bg-red-600/20 hover:border-red-500/60 bg-transparent transition-all duration-300"
+                    className="border-red-500/40 text-white hover:bg-red-600/20 hover:border-red-500/60 hover:text-white bg-transparent transition-all duration-300 text-center"
                   >
                     Back to Home
                   </Button>

@@ -53,7 +53,7 @@ export default function CartPage() {
                 <p className="text-gray-300 mb-8 max-w-md mx-auto text-sm sm:text-base">
                   Looks like you haven't added any items to your cart yet. Start shopping to fill it up!
                 </p>
-                <Button asChild size="lg" className="bg-red-600 hover:bg-red-700 text-white font-bold">
+                <Button asChild size="lg" className="bg-red-600 hover:bg-red-700 text-white font-bold text-center">
                   <Link href="/#featured-products">Browse Products</Link>
                 </Button>
               </div>
@@ -86,7 +86,7 @@ export default function CartPage() {
               <Button
                 variant="outline"
                 onClick={clearCart}
-                className="text-red-400 border-red-400 hover:bg-red-400 hover:text-white bg-transparent backdrop-blur-sm"
+                className="text-red-400 border-red-400 hover:bg-red-400 hover:text-white bg-transparent backdrop-blur-sm text-center"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -130,7 +130,7 @@ export default function CartPage() {
                               variant="outline"
                               size="sm"
                               onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                              className="w-8 h-8 p-0 bg-black/40 border-white/20 hover:bg-red-600"
+                              className="w-8 h-8 p-0 bg-black/40 border-white/20 hover:bg-red-600 hover:text-white text-center"
                             >
                               <span className="text-lg text-white">−</span>
                             </Button>
@@ -141,7 +141,7 @@ export default function CartPage() {
                               variant="outline"
                               size="sm"
                               onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                              className="w-8 h-8 p-0 bg-black/40 border-white/20 hover:bg-red-600"
+                              className="w-8 h-8 p-0 bg-black/40 border-white/20 hover:bg-red-600 hover:text-white text-center"
                             >
                               <span className="text-lg text-white">+</span>
                             </Button>
@@ -151,7 +151,7 @@ export default function CartPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => removeItem(item.id)}
-                            className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                            className="text-red-400 hover:text-white hover:bg-red-400/10 text-center"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path
@@ -200,7 +200,7 @@ export default function CartPage() {
                         onClick={handleQuickCheckout}
                         disabled={isLoading}
                         size="lg"
-                        className="w-full bg-red-600 hover:bg-red-700 text-white font-bold"
+                        className="w-full bg-red-600 hover:bg-red-700 text-white hover:text-white font-bold text-center"
                       >
                         {isLoading ? (
                           <>
@@ -226,7 +226,7 @@ export default function CartPage() {
                         asChild
                         variant="outline"
                         size="lg"
-                        className="w-full bg-transparent border-white/20 text-white hover:bg-white/10"
+                        className="w-full bg-transparent border-white/20 text-white hover:bg-white/10 hover:text-white text-center"
                       >
                         <Link href="/checkout">Review Order</Link>
                       </Button>
@@ -236,7 +236,7 @@ export default function CartPage() {
                       asChild
                       variant="ghost"
                       size="lg"
-                      className="w-full text-gray-300 hover:text-white hover:bg-white/10"
+                      className="w-full text-gray-300 hover:text-white hover:bg-white/10 text-center"
                     >
                       <Link href="/#featured-products">Continue Shopping</Link>
                     </Button>

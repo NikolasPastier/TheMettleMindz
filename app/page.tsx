@@ -105,7 +105,7 @@ export default function ChampionMindsetLanding() {
             src="/images/web-background.png"
             alt="Champion Fighters Background"
             fill
-            className="object-cover object-center sm:object-cover md:object-cover lg:object-cover object-top sm:object-center"
+            className="object-cover"
             priority
           />
           <div className="absolute inset-0 bg-black/20" />
@@ -151,7 +151,7 @@ export default function ChampionMindsetLanding() {
             src="/images/black-marble-background.jpg"
             alt="Black Marble Background"
             fill
-            className="object-cover object-center"
+            className="object-cover"
           />
           <div className="absolute inset-0 bg-black/40" />
         </div>
@@ -222,7 +222,7 @@ export default function ChampionMindsetLanding() {
             src="/images/black-marble-background.jpg"
             alt="Black Marble Background"
             fill
-            className="object-cover object-center"
+            className="object-cover"
           />
           <div className="absolute inset-0 bg-black/50" />
         </div>
@@ -332,7 +332,7 @@ export default function ChampionMindsetLanding() {
             src="/images/black-marble-background.jpg"
             alt="Black Marble Background"
             fill
-            className="object-cover object-center"
+            className="object-cover"
           />
           <div className="absolute inset-0 bg-black/60" />
         </div>

@@ -426,12 +426,12 @@ export default function CheckoutPage() {
                       className="w-full bg-red-600 hover:bg-red-700 text-white font-bold text-sm sm:text-base md:text-lg py-3 sm:py-4 md:py-6 rounded-xl transition-all duration-300 transform hover:scale-105 min-h-[48px] sm:min-h-[56px] md:min-h-[64px]"
                     >
                       {isLoading ? (
-                        <div className="flex items-center justify-center gap-2 px-2">
+                        <div className="flex items-center justify-center gap-2 px-2 w-full">
                           <div className="animate-spin rounded-full h-4 w-4 md:h-5 md:w-5 border-b-2 border-white flex-shrink-0" />
-                          <span className="truncate">Processing...</span>
+                          <span className="truncate text-xs sm:text-sm md:text-base">Processing...</span>
                         </div>
                       ) : (
-                        <div className="flex items-center justify-center gap-2 px-2">
+                        <div className="flex items-center justify-center gap-1 sm:gap-2 px-1 w-full">
                           <svg
                             className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0"
                             fill="none"
@@ -445,12 +445,15 @@ export default function CheckoutPage() {
                               d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
                             />
                           </svg>
-                          <span className="truncate">
-                            <span className="hidden sm:inline">
+                          <span className="truncate min-w-0 flex-1">
+                            <span className="hidden md:inline text-sm md:text-base">
                               {finalTotal === 0 ? "Get Free Products" : `Complete Purchase - $${finalTotal.toFixed(2)}`}
                             </span>
-                            <span className="sm:hidden">
-                              {finalTotal === 0 ? "Get Free" : `Buy Now - $${finalTotal.toFixed(2)}`}
+                            <span className="hidden sm:inline md:hidden text-xs sm:text-sm">
+                              {finalTotal === 0 ? "Get Free Products" : `Complete - $${finalTotal.toFixed(2)}`}
+                            </span>
+                            <span className="sm:hidden text-xs">
+                              {finalTotal === 0 ? "Get Free" : `Buy - $${finalTotal.toFixed(2)}`}
                             </span>
                           </span>
                         </div>
