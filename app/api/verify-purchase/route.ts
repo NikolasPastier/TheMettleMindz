@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
       .select("*")
       .eq("user_id", user.id)
       .eq("product_id", productId)
-      .eq("status", "completed")
+      .in("status", ["completed", "paid"])
       .single()
 
     if (error && error.code !== "PGRST116") {

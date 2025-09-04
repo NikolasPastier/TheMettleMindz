@@ -58,7 +58,7 @@ export default function AccountPage() {
         .from("purchases")
         .select("*")
         .eq("user_id", userId)
-        .eq("status", "paid")
+        .in("status", ["paid", "completed"])
         .order("created_at", { ascending: false })
 
       if (error) {
