@@ -114,8 +114,8 @@ export async function POST(request: NextRequest) {
       }),
     }
 
-    const successUrl = encodeURI(`${cleanBaseUrl}/success?session_id={CHECKOUT_SESSION_ID}`)
-    const cancelUrl = encodeURI(`${cleanBaseUrl}/cart`)
+    const successUrl = `${cleanBaseUrl}/success?session_id={CHECKOUT_SESSION_ID}`
+    const cancelUrl = `${cleanBaseUrl}/cart`
 
     console.log("[v0] Success URL:", successUrl)
     console.log("[v0] Cancel URL:", cancelUrl)

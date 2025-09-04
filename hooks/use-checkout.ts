@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { stripePromise } from "@/lib/stripe"
 import type { CartItem } from "@/contexts/cart-context"
 
 interface CheckoutResponse {
@@ -62,50 +61,13 @@ export function useCheckout() {
 
       console.log("[v0] Checkout session created successfully:", data)
 
-      if (!data.sessionId) {
-        console.log("[v0] No session ID received from server")
-        throw new Error("No session ID received from server")
+      if (data.url) {
+        console.log("[v0] Redirecting to Stripe checkout URL:", data.url)
+        window.location.href = data.url
+        return
       }
 
-      console.log("[v0] Session ID received:", data.sessionId)
-
-      await new Promise((resolve) => setTimeout(resolve, 100))
-
-      const stripe = await stripePromise
-      if (!stripe) {
-        console.log("[v0] Stripe failed to initialize")
-        throw new Error("Stripe failed to initialize. Please refresh and try again.")
-      }
-
-      console.log("[v0] Stripe initialized successfully")
-
-      console.log("[v0] Attempting Stripe redirect to checkout with session ID:", data.sessionId)
-
-      try {
-        const { error: stripeError } = await stripe.redirectToCheckout({
-          sessionId: data.sessionId,
-        })
-
-        if (stripeError) {
-          console.log("[v0] Stripe redirect error:", stripeError.message)
-          if (stripeError.message?.includes("insecure") || stripeError.message?.includes("security")) {
-            console.log("[v0] Security error detected, attempting direct redirect as fallback")
-            window.location.href = `https://checkout.stripe.com/pay/${data.sessionId}`
-            return
-          }
-          throw new Error(stripeError.message || "Failed to redirect to checkout")
-        }
-
-        console.log("[v0] Stripe redirect initiated successfully")
-      } catch (redirectError) {
-        console.log("[v0] Redirect error caught:", redirectError)
-        if (data.url) {
-          console.log("[v0] Using fallback URL redirect:", data.url)
-          window.location.href = data.url
-        } else {
-          throw redirectError
-        }
-      }
+      throw new Error("No checkout URL received from server")
     } catch (err) {
       console.error("Checkout error:", err)
       setError(err instanceof Error ? err.message : "An unexpected error occurred")

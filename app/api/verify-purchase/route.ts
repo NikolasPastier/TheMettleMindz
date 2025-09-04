@@ -10,7 +10,10 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser()
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({
+        hasPurchased: false,
+        purchase: null,
+      })
     }
 
     const { productId } = await request.json()
