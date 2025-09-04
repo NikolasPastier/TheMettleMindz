@@ -47,8 +47,17 @@ export default function ThemePageMasterclassPage() {
   }
 
   return (
-    <div className="min-h-screen marble-bg">
-      <div className="pt-24 pb-16">
+    <div className="min-h-screen relative">
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="/images/black-marble-background.jpg"
+          alt="Black Marble Background"
+          fill
+          className="object-cover object-center"
+        />
+        <div className="absolute inset-0 bg-black/60" />
+      </div>
+      <div className="pt-24 pb-16 relative z-10">
         <div className="max-w-6xl mx-auto px-4">
           {/* Hero Section */}
           <div className="grid md:grid-cols-2 gap-12 items-center mb-16">

@@ -27,7 +27,6 @@ export async function POST(request: NextRequest) {
       error: userError,
     } = await supabase.auth.getUser()
 
-    // Check if purchase already recorded
     const { data: existingPurchase } = await supabase
       .from("purchases")
       .select("id")
@@ -35,7 +34,8 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (existingPurchase) {
-      return NextResponse.json({ message: "Purchase already recorded" })
+      console.log("[v0] Purchase already recorded for session:", sessionId)
+      return NextResponse.json({ message: "Purchase already recorded", alreadyExists: true })
     }
 
     let items = []
@@ -82,6 +82,34 @@ export async function POST(request: NextRequest) {
     if (errors.length > 0) {
       console.error("Error recording purchases:", errors)
       return NextResponse.json({ error: "Failed to record some purchases" }, { status: 500 })
+    }
+
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/clear-cart`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ purchasedItems: items, sessionId }),
+      })
+    } catch (cartError) {
+      console.error("Error clearing cart:", cartError)
+      // Don't fail the purchase if cart clearing fails
+    }
+
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/send-confirmation-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerEmail: session.customer_email,
+          customerName: session.customer_details?.name,
+          purchasedItems: items,
+          sessionId: sessionId,
+          totalAmount: session.amount_total,
+        }),
+      })
+    } catch (emailError) {
+      console.error("Error sending confirmation email:", emailError)
+      // Don't fail the purchase if email fails
     }
 
     return NextResponse.json({
