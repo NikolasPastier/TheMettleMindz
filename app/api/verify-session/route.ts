@@ -18,30 +18,47 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Session ID is required" }, { status: 400 })
     }
 
-    // Retrieve session with expanded data
-    const session = await stripe.checkout.sessions.retrieve(sessionId, {
-      expand: ["line_items", "customer", "payment_intent"],
-    })
+    console.log("[v0] Verifying session:", sessionId)
 
-    if (session.payment_status !== "paid") {
-      return NextResponse.json({ error: "Payment not completed" }, { status: 400 })
-    }
+    try {
+      // Retrieve session with expanded data
+      const session = await stripe.checkout.sessions.retrieve(sessionId, {
+        expand: ["line_items", "customer", "payment_intent"],
+      })
 
-    return NextResponse.json({
-      session: {
+      console.log("[v0] Session retrieved:", {
         id: session.id,
         payment_status: session.payment_status,
         customer_email: session.customer_details?.email,
-        customer_name: session.customer_details?.name,
-        amount_total: session.amount_total,
-        currency: session.currency,
-        created: session.created,
-        metadata: session.metadata,
-        line_items: session.line_items?.data || [],
-      },
-    })
+      })
+
+      if (session.payment_status !== "paid") {
+        console.log("[v0] Payment not completed, status:", session.payment_status)
+        return NextResponse.json({ error: "Payment not completed" }, { status: 400 })
+      }
+
+      return NextResponse.json({
+        session: {
+          id: session.id,
+          payment_status: session.payment_status,
+          customer_email: session.customer_details?.email,
+          customer_name: session.customer_details?.name,
+          amount_total: session.amount_total,
+          currency: session.currency,
+          created: session.created,
+          metadata: session.metadata,
+          line_items: session.line_items?.data || [],
+        },
+      })
+    } catch (stripeError) {
+      console.error("[v0] Stripe API error:", stripeError)
+      if (stripeError instanceof Error && stripeError.message.includes("No such checkout session")) {
+        return NextResponse.json({ error: "Invalid session ID" }, { status: 404 })
+      }
+      throw stripeError
+    }
   } catch (error) {
-    console.error("Error verifying session:", error)
+    console.error("[v0] Error verifying session:", error)
     return NextResponse.json({ error: "Failed to verify session" }, { status: 500 })
   }
 }

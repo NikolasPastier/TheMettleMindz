@@ -47,10 +47,17 @@ export default function SuccessPage() {
         const supabase = createClient()
         const {
           data: { user },
+          error: authError,
         } = await supabase.auth.getUser()
-        setUser(user)
+
+        if (authError) {
+          console.log("[v0] Auth error (continuing without login):", authError.message)
+        } else {
+          console.log("[v0] User authenticated:", user?.email || "No email")
+          setUser(user)
+        }
       } catch (error) {
-        console.log("User not logged in, continuing without account integration")
+        console.log("[v0] User not logged in, continuing without account integration")
       }
     }
 
@@ -64,14 +71,20 @@ export default function SuccessPage() {
 
     const verifySession = async () => {
       try {
+        console.log("[v0] Starting session verification for:", sessionId)
+
         const response = await fetch(`/api/verify-session?session_id=${sessionId}`)
+
+        console.log("[v0] Verify session response status:", response.status)
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}))
+          console.error("[v0] Session verification failed:", errorData)
           throw new Error(errorData.error || `HTTP ${response.status}: Failed to verify payment`)
         }
 
         const data = await response.json()
+        console.log("[v0] Session verification successful:", data.session?.id)
 
         if (!data.session) {
           throw new Error("Invalid session data received")
@@ -80,6 +93,8 @@ export default function SuccessPage() {
         setSessionData(data.session)
 
         try {
+          console.log("[v0] Recording purchase for session:", sessionId)
+
           const recordResponse = await fetch("/api/record-purchase", {
             method: "POST",
             headers: {
@@ -91,27 +106,34 @@ export default function SuccessPage() {
           })
 
           if (recordResponse.ok) {
+            console.log("[v0] Purchase recorded successfully")
             setPurchaseRecorded(true)
           } else {
-            console.error("Failed to record purchase:", await recordResponse.text())
+            const errorText = await recordResponse.text()
+            console.error("[v0] Failed to record purchase:", errorText)
           }
         } catch (recordError) {
-          console.error("Error recording purchase:", recordError)
+          console.error("[v0] Error recording purchase:", recordError)
         }
 
         if (data.session.metadata?.items) {
           try {
             const items = JSON.parse(data.session.metadata.items)
             if (Array.isArray(items)) {
+              console.log("[v0] Parsed purchased items:", items.length)
               setPurchasedItems(items)
+            } else {
+              console.error("[v0] Items is not an array:", items)
             }
           } catch (parseError) {
-            console.error("Error parsing purchased items:", parseError)
+            console.error("[v0] Error parsing purchased items:", parseError)
             // Continue without items if parsing fails
           }
+        } else {
+          console.log("[v0] No items metadata found in session")
         }
       } catch (err) {
-        console.error("Session verification error:", err)
+        console.error("[v0] Session verification error:", err)
         setError(err instanceof Error ? err.message : "Unable to verify your purchase")
       } finally {
         setLoading(false)
@@ -376,7 +398,7 @@ export default function SuccessPage() {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
                       />
                     </svg>
                     Create Account to Save Products
