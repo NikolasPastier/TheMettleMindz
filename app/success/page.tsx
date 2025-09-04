@@ -85,44 +85,24 @@ export default function SuccessPage() {
         }
 
         const data = await response.json()
-        console.log("[v0] Session verification successful:", data.session?.id)
+        console.log("[v0] Session verification successful:", {
+          sessionId: data.session?.id,
+          purchasesSaved: data.purchasesSaved,
+          cartCleared: data.cartCleared,
+          emailSent: data.emailSent,
+        })
 
         if (!data.session) {
           throw new Error("Invalid session data received")
         }
 
         setSessionData(data.session)
+        setPurchaseRecorded(data.purchasesSaved || false)
 
-        try {
-          console.log("[v0] Recording purchase for session:", sessionId)
-
-          const recordResponse = await fetch("/api/record-purchase", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              sessionId: sessionId,
-            }),
-          })
-
-          if (recordResponse.ok) {
-            const recordData = await recordResponse.json()
-            console.log("[v0] Purchase recorded successfully")
-            setPurchaseRecorded(true)
-
-            if (typeof window !== "undefined") {
-              // Clear localStorage cart for guest users
-              localStorage.removeItem("cart")
-              localStorage.removeItem("cartItems")
-              console.log("[v0] Frontend cart cleared")
-            }
-          } else {
-            const errorText = await recordResponse.text()
-            console.error("[v0] Failed to record purchase:", errorText)
-          }
-        } catch (recordError) {
-          console.error("[v0] Error recording purchase:", recordError)
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("cart")
+          localStorage.removeItem("cartItems")
+          console.log("[v0] Frontend cart cleared")
         }
 
         if (data.session.metadata?.items) {
@@ -136,7 +116,6 @@ export default function SuccessPage() {
             }
           } catch (parseError) {
             console.error("[v0] Error parsing purchased items:", parseError)
-            // Continue without items if parsing fails
           }
         } else {
           console.log("[v0] No items metadata found in session")

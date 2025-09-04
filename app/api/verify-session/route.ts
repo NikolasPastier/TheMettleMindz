@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { stripe } from "@/lib/stripe-server"
+import { createServerClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,7 +25,7 @@ export async function GET(request: NextRequest) {
     try {
       // Retrieve session with expanded data
       const session = await stripe.checkout.sessions.retrieve(sessionId, {
-        expand: ["line_items", "customer", "payment_intent"],
+        expand: ["line_items", "line_items.data.price.product", "customer", "payment_intent"],
       })
 
       console.log("[v0] Session retrieved:", {
@@ -35,6 +37,139 @@ export async function GET(request: NextRequest) {
       if (session.payment_status !== "paid") {
         console.log("[v0] Payment not completed, status:", session.payment_status)
         return NextResponse.json({ error: "Payment not completed" }, { status: 400 })
+      }
+
+      const cookieStore = cookies()
+      const supabase = createServerClient(cookieStore)
+
+      let userId = null
+      try {
+        const {
+          data: { user },
+          error: authError,
+        } = await supabase.auth.getUser()
+        if (!authError && user) {
+          userId = user.id
+          console.log("[v0] User authenticated:", user.email)
+        } else {
+          console.log("[v0] No authenticated user, will save by email")
+        }
+      } catch (authError) {
+        console.log("[v0] Auth check failed, continuing as guest")
+      }
+
+      const customerEmail = session.customer_details?.email
+      const lineItems = session.line_items?.data || []
+
+      console.log("[v0] Processing", lineItems.length, "line items for purchase recording")
+
+      for (const item of lineItems) {
+        try {
+          // Extract product ID from metadata or price.product
+          let productId = null
+
+          if (item.price?.product && typeof item.price.product === "object") {
+            productId = item.price.product.metadata?.product_id || item.price.product.id
+          } else if (typeof item.price?.product === "string") {
+            productId = item.price.product
+          }
+
+          // Fallback to session metadata
+          if (!productId && session.metadata?.items) {
+            try {
+              const items = JSON.parse(session.metadata.items)
+              if (Array.isArray(items) && items.length > 0) {
+                productId = items[0].id // Use first item as fallback
+              }
+            } catch (parseError) {
+              console.error("[v0] Error parsing session metadata items:", parseError)
+            }
+          }
+
+          if (!productId) {
+            console.error("[v0] Could not determine product ID for line item:", item.id)
+            continue
+          }
+
+          console.log("[v0] Saving purchase for product:", productId)
+
+          // Check if purchase already exists (idempotency)
+          const { data: existingPurchase } = await supabase
+            .from("purchases")
+            .select("id")
+            .eq("product_id", productId)
+            .eq("status", "completed")
+            .or(userId ? `user_id.eq.${userId}` : `customer_email.eq.${customerEmail}`)
+            .single()
+
+          if (existingPurchase) {
+            console.log("[v0] Purchase already exists for product:", productId)
+            continue
+          }
+
+          // Insert purchase record
+          const purchaseData = {
+            user_id: userId,
+            customer_email: customerEmail,
+            product_id: productId,
+            amount: item.amount_total || 0,
+            currency: session.currency || "usd",
+            status: "completed",
+            purchased_at: new Date().toISOString(),
+            stripe_session_id: sessionId,
+          }
+
+          const { error: insertError } = await supabase.from("purchases").insert(purchaseData)
+
+          if (insertError) {
+            console.error("[v0] Error inserting purchase:", insertError)
+          } else {
+            console.log("[v0] Purchase saved successfully for product:", productId)
+          }
+        } catch (itemError) {
+          console.error("[v0] Error processing line item:", itemError)
+        }
+      }
+
+      if (userId) {
+        try {
+          const { error: cartError } = await supabase.from("cart_items").delete().eq("user_id", userId)
+
+          if (cartError) {
+            console.error("[v0] Error clearing cart:", cartError)
+          } else {
+            console.log("[v0] Cart cleared for user:", userId)
+          }
+        } catch (cartError) {
+          console.error("[v0] Error clearing cart:", cartError)
+        }
+      }
+
+      try {
+        if (customerEmail && process.env.RESEND_API_KEY) {
+          const emailResponse = await fetch(`${request.nextUrl.origin}/api/send-confirmation-email`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: customerEmail,
+              customerName: session.customer_details?.name,
+              sessionId: sessionId,
+              items: session.metadata?.items ? JSON.parse(session.metadata.items) : [],
+              totalAmount: session.amount_total,
+              currency: session.currency,
+            }),
+          })
+
+          if (emailResponse.ok) {
+            console.log("[v0] Confirmation email sent successfully")
+          } else {
+            console.error("[v0] Failed to send confirmation email:", await emailResponse.text())
+          }
+        }
+      } catch (emailError) {
+        console.error("[v0] Error sending confirmation email:", emailError)
       }
 
       return NextResponse.json({
@@ -49,6 +184,9 @@ export async function GET(request: NextRequest) {
           metadata: session.metadata,
           line_items: session.line_items?.data || [],
         },
+        purchasesSaved: true,
+        cartCleared: !!userId,
+        emailSent: !!process.env.RESEND_API_KEY,
       })
     } catch (stripeError) {
       console.error("[v0] Stripe API error:", stripeError)

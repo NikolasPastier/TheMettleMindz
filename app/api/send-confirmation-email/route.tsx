@@ -1,125 +1,100 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { Resend } from "resend"
+
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(request: NextRequest) {
   try {
-    const { customerEmail, customerName, purchasedItems, sessionId, totalAmount } = await request.json()
+    const { email, customerName, sessionId, items, totalAmount, currency } = await request.json()
 
-    if (!customerEmail || !purchasedItems || !Array.isArray(purchasedItems)) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+    if (!email) {
+      return NextResponse.json({ error: "Email is required" }, { status: 400 })
     }
 
-    const getDownloadLink = (itemId: string) => {
-      const downloadLinks: Record<string, string> = {
-        "champions-mindset": "https://drive.google.com/uc?export=download&id=1-hXEHZ26npEmE9TioMBZNAQdlPeGBNIE",
-        "theme-page-masterclass": `${process.env.NEXT_PUBLIC_APP_URL || "https://v0-champion-s-mindset-landing-page.vercel.app"}/course/theme-page-masterclass`,
-        "theme-page-masterclass-ebook":
-          "https://drive.google.com/uc?export=download&id=1UEEeyznbNAlU2ryw-nPVxL6FNrEeiUjO",
-        "viral-clip-pack-bundle": "https://drive.google.com/uc?export=download&id=VIRAL_CLIP_PACK_FILE_ID",
-      }
-      return downloadLinks[itemId] || `${process.env.NEXT_PUBLIC_APP_URL}/downloads/${itemId}.pdf`
+    if (!process.env.RESEND_API_KEY) {
+      console.log("[v0] RESEND_API_KEY not configured, skipping email")
+      return NextResponse.json({ message: "Email service not configured" }, { status: 200 })
     }
 
-    const getItemDescription = (itemId: string) => {
-      const descriptions: Record<string, string> = {
-        "champions-mindset": "Complete e-book with bonus materials and 60-day roadmap",
-        "theme-page-masterclass": "Video course with templates and resources",
-        "theme-page-masterclass-ebook": "E-book version with comprehensive guide and templates",
-        "viral-clip-pack-bundle": "Complete collection of viral video clips and templates",
-      }
-      return descriptions[itemId] || "Digital product with instant access"
-    }
+    const productNames = items?.map((item: any) => item.title).join(", ") || "Digital Products"
+    const formattedAmount = ((totalAmount || 0) / 100).toFixed(2)
 
-    // Generate email HTML content
+    const downloadLinks =
+      items?.map((item: any) => {
+        const links: Record<string, string> = {
+          "champions-mindset": "https://drive.google.com/uc?export=download&id=1-hXEHZ26npEmE9TioMBZNAQdlPeGBNIE",
+          "theme-page-masterclass": `${request.nextUrl.origin}/course/theme-page-masterclass`,
+          "theme-page-masterclass-ebook":
+            "https://drive.google.com/uc?export=download&id=1UEEeyznbNAlU2ryw-nPVxL6FNrEeiUjO",
+          "viral-clip-pack-bundle": "https://drive.google.com/uc?export=download&id=VIRAL_CLIP_PACK_FILE_ID",
+        }
+        return {
+          title: item.title,
+          link: links[item.id] || "#",
+          isDownload: item.id !== "theme-page-masterclass",
+        }
+      }) || []
+
     const emailHtml = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <title>Purchase Confirmation - Champion's Mindset</title>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #dc2626, #991b1b); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-            .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-            .product-item { background: white; padding: 20px; margin: 15px 0; border-radius: 8px; border-left: 4px solid #dc2626; }
-            .download-btn { display: inline-block; background: #dc2626; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 10px; }
-            .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>🎉 Purchase Confirmed!</h1>
-              <p>Thank you for your purchase, ${customerName || "Champion"}!</p>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h1 style="color: #dc2626; text-align: center;">Thank You for Your Purchase!</h1>
+        
+        ${customerName ? `<p>Dear ${customerName},</p>` : "<p>Dear Valued Customer,</p>"}
+        
+        <p>Your payment has been successfully processed. Here are your purchase details:</p>
+        
+        <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="margin-top: 0;">Order Summary</h3>
+          <p><strong>Order ID:</strong> ${sessionId.slice(-8).toUpperCase()}</p>
+          <p><strong>Products:</strong> ${productNames}</p>
+          <p><strong>Total:</strong> $${formattedAmount} ${currency?.toUpperCase() || "USD"}</p>
+        </div>
+        
+        <h3>Your Downloads & Access Links:</h3>
+        <div style="margin: 20px 0;">
+          ${downloadLinks
+            .map(
+              (link) => `
+            <div style="background: #fff; border: 1px solid #e5e7eb; padding: 15px; margin: 10px 0; border-radius: 6px;">
+              <h4 style="margin: 0 0 10px 0; color: #374151;">${link.title}</h4>
+              <a href="${link.link}" style="background: #dc2626; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">
+                ${link.isDownload ? "Download Now" : "Access Course"}
+              </a>
             </div>
-            <div class="content">
-              <h2>Your Digital Products</h2>
-              <p>Your order has been successfully processed. Here are your purchased items with instant access:</p>
-              
-              ${purchasedItems
-                .map(
-                  (item: any) => `
-                <div class="product-item">
-                  <h3>${item.title}</h3>
-                  <p>${getItemDescription(item.id)}</p>
-                  ${item.quantity > 1 ? `<p><strong>Quantity:</strong> ${item.quantity}</p>` : ""}
-                  ${item.price ? `<p><strong>Price:</strong> $${(item.price * (item.quantity || 1)).toFixed(2)}</p>` : ""}
-                  <a href="${getDownloadLink(item.id)}" class="download-btn">
-                    ${item.id === "theme-page-masterclass" ? "🎓 Access Course" : "⬇️ Download Now"}
-                  </a>
-                </div>
-              `,
-                )
-                .join("")}
-              
-              <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin-top: 20px;">
-                <h3>📧 Order Details</h3>
-                <p><strong>Order ID:</strong> ${sessionId?.slice(-8).toUpperCase()}</p>
-                <p><strong>Email:</strong> ${customerEmail}</p>
-                <p><strong>Total:</strong> $${totalAmount ? (totalAmount / 100).toFixed(2) : "0.00"}</p>
-                <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
-              </div>
-              
-              <div style="background: #fff3cd; padding: 20px; border-radius: 8px; margin-top: 20px;">
-                <h3>💡 What's Next?</h3>
-                <ul>
-                  <li>Download your products using the links above</li>
-                  <li>Start your transformation journey today</li>
-                  <li>Join our community of champions</li>
-                  <li>Create an account to access your products anytime</li>
-                </ul>
-              </div>
-            </div>
-            <div class="footer">
-              <p>Need help? Contact us at support@championsmindset.com</p>
-              <p>© ${new Date().getFullYear()} Champion's Mindset. All rights reserved.</p>
-            </div>
-          </div>
-        </body>
-      </html>
+          `,
+            )
+            .join("")}
+        </div>
+        
+        <p>If you have any questions or need support, please don't hesitate to contact us.</p>
+        
+        <p style="margin-top: 30px;">
+          Best regards,<br>
+          <strong>The Champion's Mindset Team</strong>
+        </p>
+        
+        <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px;">
+          <p>This email was sent regarding your purchase. Please keep this email for your records.</p>
+        </div>
+      </div>
     `
 
-    // For now, we'll log the email content (in production, integrate with email service)
-    console.log("[v0] Email would be sent to:", customerEmail)
-    console.log("[v0] Email content generated successfully")
-
-    // TODO: Integrate with email service (Resend, SendGrid, etc.)
-    // Example with Resend:
-    // const resend = new Resend(process.env.RESEND_API_KEY)
-    // await resend.emails.send({
-    //   from: 'noreply@championsmindset.com',
-    //   to: customerEmail,
-    //   subject: 'Your Purchase Confirmation - Champion\'s Mindset',
-    //   html: emailHtml
-    // })
-
-    return NextResponse.json({
-      message: "Email prepared successfully",
-      emailSent: false, // Set to true when email service is integrated
-      recipient: customerEmail,
+    const { data, error } = await resend.emails.send({
+      from: "Champion's Mindset <noreply@championsmindset.com>",
+      to: [email],
+      subject: `Your Purchase Confirmation - Order ${sessionId.slice(-8).toUpperCase()}`,
+      html: emailHtml,
     })
+
+    if (error) {
+      console.error("[v0] Resend error:", error)
+      return NextResponse.json({ error: "Failed to send email" }, { status: 500 })
+    }
+
+    console.log("[v0] Email sent successfully:", data?.id)
+    return NextResponse.json({ message: "Email sent successfully", id: data?.id })
   } catch (error) {
-    console.error("Error sending confirmation email:", error)
-    return NextResponse.json({ error: "Failed to send email" }, { status: 500 })
+    console.error("[v0] Email API error:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

@@ -86,7 +86,7 @@ export default function CartPage() {
               <Button
                 variant="outline"
                 onClick={clearCart}
-                className="text-red-400 border-red-400 hover:bg-red-400 hover:text-white bg-transparent backdrop-blur-sm text-center"
+                className="text-red-400 border-red-400 hover:bg-red-400 hover:text-white bg-transparent backdrop-blur-sm text-center flex items-center justify-center px-4"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -200,7 +200,7 @@ export default function CartPage() {
                         onClick={handleQuickCheckout}
                         disabled={isLoading}
                         size="lg"
-                        className="w-full bg-red-600 hover:bg-red-700 text-white hover:text-white font-bold text-center"
+                        className="w-full bg-red-600 hover:bg-red-700 text-white hover:text-white font-bold text-center flex items-center justify-center"
                       >
                         {isLoading ? (
                           <>
