@@ -42,12 +42,7 @@ export async function updateSession(request: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser()
 
-    if (
-      !user &&
-      (request.nextUrl.pathname.startsWith("/checkout") ||
-        request.nextUrl.pathname.startsWith("/course") ||
-        request.nextUrl.pathname.startsWith("/product"))
-    ) {
+    if (!user && (request.nextUrl.pathname.startsWith("/checkout") || request.nextUrl.pathname.startsWith("/course"))) {
       // Redirect to login with return URL for checkout flow
       const url = request.nextUrl.clone()
       url.pathname = "/auth/login"
