@@ -32,9 +32,10 @@ export async function GET(request: NextRequest) {
         id: session.id,
         payment_status: session.payment_status,
         customer_email: session.customer_details?.email,
+        amount_total: session.amount_total,
       })
 
-      if (session.payment_status !== "paid") {
+      if (session.payment_status !== "paid" && session.payment_status !== "no_payment_required") {
         console.log("[v0] Payment not completed, status:", session.payment_status)
         return NextResponse.json({ error: "Payment not completed" }, { status: 400 })
       }
@@ -63,6 +64,7 @@ export async function GET(request: NextRequest) {
 
       console.log("[v0] Processing", lineItems.length, "line items for purchase recording")
 
+      const purchaseResults = []
       for (const item of lineItems) {
         try {
           // Extract product ID from metadata or price.product
@@ -91,7 +93,7 @@ export async function GET(request: NextRequest) {
             continue
           }
 
-          console.log("[v0] Saving purchase for product:", productId)
+          console.log("[v0] Saving purchase for product:", productId, "Amount:", item.amount_total || 0)
 
           // Check if purchase already exists (idempotency)
           const { data: existingPurchase } = await supabase
@@ -104,15 +106,15 @@ export async function GET(request: NextRequest) {
 
           if (existingPurchase) {
             console.log("[v0] Purchase already exists for product:", productId)
+            purchaseResults.push({ productId, status: "already_exists" })
             continue
           }
 
-          // Insert purchase record
           const purchaseData = {
             user_id: userId,
             customer_email: customerEmail,
             product_id: productId,
-            amount: item.amount_total || 0,
+            amount_paid: item.amount_total || 0, // This will be 0 for free purchases with discount codes
             currency: session.currency || "usd",
             status: "completed",
             purchased_at: new Date().toISOString(),
@@ -123,14 +125,23 @@ export async function GET(request: NextRequest) {
 
           if (insertError) {
             console.error("[v0] Error inserting purchase:", insertError)
+            purchaseResults.push({ productId, status: "error", error: insertError.message })
           } else {
-            console.log("[v0] Purchase saved successfully for product:", productId)
+            console.log(
+              "[v0] Purchase saved successfully for product:",
+              productId,
+              "Amount paid:",
+              item.amount_total || 0,
+            )
+            purchaseResults.push({ productId, status: "saved", amountPaid: item.amount_total || 0 })
           }
         } catch (itemError) {
           console.error("[v0] Error processing line item:", itemError)
+          purchaseResults.push({ productId: "unknown", status: "error", error: itemError.message })
         }
       }
 
+      // Clear cart for authenticated users
       if (userId) {
         try {
           const { error: cartError } = await supabase.from("cart_items").delete().eq("user_id", userId)
@@ -145,6 +156,7 @@ export async function GET(request: NextRequest) {
         }
       }
 
+      let emailSent = false
       try {
         if (customerEmail && process.env.RESEND_API_KEY) {
           const emailResponse = await fetch(`${request.nextUrl.origin}/api/send-confirmation-email`, {
@@ -157,13 +169,15 @@ export async function GET(request: NextRequest) {
               customerName: session.customer_details?.name,
               sessionId: sessionId,
               items: session.metadata?.items ? JSON.parse(session.metadata.items) : [],
-              totalAmount: session.amount_total,
+              totalAmount: session.amount_total || 0, // Include 0 for free purchases
               currency: session.currency,
+              isFree: (session.amount_total || 0) === 0, // Flag for free purchases
             }),
           })
 
           if (emailResponse.ok) {
             console.log("[v0] Confirmation email sent successfully")
+            emailSent = true
           } else {
             console.error("[v0] Failed to send confirmation email:", await emailResponse.text())
           }
@@ -178,15 +192,17 @@ export async function GET(request: NextRequest) {
           payment_status: session.payment_status,
           customer_email: session.customer_details?.email,
           customer_name: session.customer_details?.name,
-          amount_total: session.amount_total,
+          amount_total: session.amount_total || 0, // Include 0 for free purchases
           currency: session.currency,
           created: session.created,
           metadata: session.metadata,
           line_items: session.line_items?.data || [],
         },
-        purchasesSaved: true,
+        purchasesSaved: purchaseResults.filter((p) => p.status === "saved" || p.status === "already_exists").length > 0,
+        purchaseResults,
         cartCleared: !!userId,
-        emailSent: !!process.env.RESEND_API_KEY,
+        emailSent,
+        isFree: (session.amount_total || 0) === 0, // Flag for free purchases
       })
     } catch (stripeError) {
       console.error("[v0] Stripe API error:", stripeError)

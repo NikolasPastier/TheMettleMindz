@@ -41,6 +41,7 @@ export default function SuccessPage() {
   const [error, setError] = useState<string | null>(null)
   const [purchaseRecorded, setPurchaseRecorded] = useState(false)
   const [user, setUser] = useState<any>(null)
+  const [isFree, setIsFree] = useState(false)
 
   useEffect(() => {
     const checkUser = async () => {
@@ -90,6 +91,7 @@ export default function SuccessPage() {
           purchasesSaved: data.purchasesSaved,
           cartCleared: data.cartCleared,
           emailSent: data.emailSent,
+          isFree: data.isFree,
         })
 
         if (!data.session) {
@@ -98,6 +100,7 @@ export default function SuccessPage() {
 
         setSessionData(data.session)
         setPurchaseRecorded(data.purchasesSaved || false)
+        setIsFree(data.isFree || false)
 
         if (typeof window !== "undefined") {
           localStorage.removeItem("cart")
@@ -235,7 +238,6 @@ export default function SuccessPage() {
       </div>
       <div className="pt-20 pb-16 relative z-10">
         <div className="max-w-4xl mx-auto px-4">
-          {/* Success Header */}
           <div className="text-center mb-12">
             <svg
               className="w-20 h-20 text-green-400 mx-auto mb-6"
@@ -250,9 +252,13 @@ export default function SuccessPage() {
                 d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            <h1 className="text-4xl font-bold text-white mb-4">Payment Successful!</h1>
+            <h1 className="text-4xl font-bold text-white mb-4">
+              {isFree ? "Free Access Granted!" : "Payment Successful!"}
+            </h1>
             <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-              Thank you for your purchase. Your digital products are ready for instant access.
+              {isFree
+                ? "Thank you for using our discount code! Your digital products are ready for instant access."
+                : "Thank you for your purchase. Your digital products are ready for instant access."}
             </p>
             {sessionData?.customer_name && (
               <p className="text-gray-400 mt-2">Welcome to the champion mindset, {sessionData.customer_name}!</p>
@@ -269,7 +275,6 @@ export default function SuccessPage() {
           </div>
 
           <div className="grid lg:grid-cols-3 gap-8">
-            {/* Download Links */}
             <div className="lg:col-span-2">
               <Card className="bg-black/40 border-white/20 backdrop-blur-sm rounded-2xl mb-6">
                 <CardHeader>
@@ -296,6 +301,7 @@ export default function SuccessPage() {
                           <h3 className="text-white font-semibold text-lg">{item.title}</h3>
                           <p className="text-gray-400 text-sm">{getItemDescription(item.id)}</p>
                           {item.quantity > 1 && <p className="text-red-400 text-sm">Quantity: {item.quantity}</p>}
+                          {isFree && <p className="text-green-400 text-sm font-semibold">✓ Free Access Granted</p>}
                         </div>
                         <Button asChild className="bg-red-500 hover:bg-red-600 text-white font-bold">
                           {item.id === "theme-page-masterclass" ? (
@@ -351,7 +357,6 @@ export default function SuccessPage() {
                 </CardContent>
               </Card>
 
-              {/* Next Steps */}
               <Card className="bg-black/40 border-white/20 backdrop-blur-sm rounded-2xl">
                 <CardHeader>
                   <CardTitle className="text-white">What's Next?</CardTitle>
@@ -373,7 +378,6 @@ export default function SuccessPage() {
               </Card>
             </div>
 
-            {/* Order Summary */}
             <div className="lg:col-span-1">
               <Card className="bg-black/40 border-white/20 backdrop-blur-sm rounded-2xl mb-6">
                 <CardHeader>
@@ -404,7 +408,10 @@ export default function SuccessPage() {
 
                   <div className="flex justify-between text-white font-bold text-lg">
                     <span>Total Paid</span>
-                    <span>${sessionData ? (sessionData.amount_total / 100).toFixed(2) : "0.00"}</span>
+                    <span className={isFree ? "text-green-400" : ""}>
+                      ${sessionData ? (sessionData.amount_total / 100).toFixed(2) : "0.00"}
+                      {isFree && <span className="text-xs ml-1">(FREE)</span>}
+                    </span>
                   </div>
                 </CardContent>
               </Card>
@@ -447,7 +454,7 @@ export default function SuccessPage() {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                        d="M3 12l2-2m0 0l7-7 7 7M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                       />
                     </svg>
                     Return Home
