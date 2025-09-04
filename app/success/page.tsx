@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import Link from "next/link"
-import { useAuth } from "@/contexts/auth-context"
+import { createClient } from "@/lib/supabase/client"
 
 interface PurchasedItem {
   id: string
@@ -39,9 +39,23 @@ export default function SuccessPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [purchaseRecorded, setPurchaseRecorded] = useState(false)
-  const { addPurchase } = useAuth()
+  const [user, setUser] = useState<any>(null)
 
   useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const supabase = createClient()
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
+        setUser(user)
+      } catch (error) {
+        console.log("User not logged in, continuing without account integration")
+      }
+    }
+
+    checkUser()
+
     if (!sessionId) {
       setError("No session ID found. Please check your payment confirmation email.")
       setLoading(false)
@@ -90,13 +104,6 @@ export default function SuccessPage() {
             const items = JSON.parse(data.session.metadata.items)
             if (Array.isArray(items)) {
               setPurchasedItems(items)
-
-              // Add purchases to user account
-              items.forEach((item: PurchasedItem) => {
-                if (item.id) {
-                  addPurchase(item.id)
-                }
-              })
             }
           } catch (parseError) {
             console.error("Error parsing purchased items:", parseError)
@@ -112,7 +119,7 @@ export default function SuccessPage() {
     }
 
     verifySession()
-  }, [sessionId, addPurchase])
+  }, [sessionId])
 
   const getDownloadLink = (itemId: string) => {
     const downloadLinks: Record<string, string> = {
@@ -202,7 +209,9 @@ export default function SuccessPage() {
           {purchaseRecorded && (
             <Alert className="bg-green-500/10 border-green-500/20 max-w-md mx-auto mt-4">
               <AlertDescription className="text-green-400">
-                Your purchase has been added to your account for future access.
+                {user
+                  ? "Your purchase has been added to your account for future access."
+                  : "Your purchase has been recorded. Create an account to access your products anytime!"}
               </AlertDescription>
             </Alert>
           )}
@@ -350,14 +359,30 @@ export default function SuccessPage() {
             </Card>
 
             <div className="space-y-3">
-              <Button asChild size="lg" className="w-full bg-red-500 hover:bg-red-600 text-white font-bold">
-                <Link href="/account">
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                  View My Account
-                </Link>
-              </Button>
+              {user ? (
+                <Button asChild size="lg" className="w-full bg-red-500 hover:bg-red-600 text-white font-bold">
+                  <Link href="/account">
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                    View My Account
+                  </Link>
+                </Button>
+              ) : (
+                <Button asChild size="lg" className="w-full bg-red-500 hover:bg-red-600 text-white font-bold">
+                  <Link href="/auth/register?returnTo=/account">
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                      />
+                    </svg>
+                    Create Account to Save Products
+                  </Link>
+                </Button>
+              )}
 
               <Button
                 asChild
