@@ -1,6 +1,6 @@
 import { neon } from "@neondatabase/serverless"
 
-const sql = neon(process.env.NEON_NEON_DATABASE_URL!)
+const sql = neon(process.env.NEON_NEON_NEON_DATABASE_URL!)
 
 interface DbTable {
   get: (id: string) => Promise<any>
@@ -14,50 +14,46 @@ interface DbTable {
 function createTable(tableName: string): DbTable {
   return {
     async get(id: string) {
-      const result = await sql`SELECT * FROM ${sql(tableName)} WHERE id = ${id}`
+      const result = await sql`SELECT * FROM ${sql.unsafe(tableName)} WHERE id = ${id}`
       return result[0] || null
     },
 
     async insert(data: any) {
       const keys = Object.keys(data)
       const values = Object.values(data)
-      const placeholders = keys.map((_, i) => `$${i + 1}`).join(", ")
+      const placeholders = keys.map(() => "?").join(", ")
       const columns = keys.join(", ")
 
-      const result = await sql`
-        INSERT INTO ${sql(tableName)} (${sql(columns)}) 
-        VALUES (${sql(values)}) 
-        RETURNING *
-      `
-      return result[0]
+      const query = `INSERT INTO ${tableName} (${columns}) VALUES (${keys.map((_, i) => `$${i + 1}`).join(", ")}) RETURNING *`
+      const result = await sql.query(query, values)
+      return result.rows[0]
     },
 
     async update(id: string, data: any) {
       const keys = Object.keys(data)
+      const values = Object.values(data)
       const setClause = keys.map((key, i) => `${key} = $${i + 2}`).join(", ")
 
-      const result = await sql`
-        UPDATE ${sql(tableName)} 
-        SET ${sql(setClause)} 
-        WHERE id = $1 
-        RETURNING *
-      `
-      return result[0]
+      const query = `UPDATE ${tableName} SET ${setClause} WHERE id = $1 RETURNING *`
+      const result = await sql.query(query, [id, ...values])
+      return result.rows[0]
     },
 
     async delete(id: string) {
-      const result = await sql`DELETE FROM ${sql(tableName)} WHERE id = ${id} RETURNING *`
+      const result = await sql`DELETE FROM ${sql.unsafe(tableName)} WHERE id = ${id} RETURNING *`
       return result[0]
     },
 
     async findBy(field: string, value: any) {
-      const result = await sql`SELECT * FROM ${sql(tableName)} WHERE ${sql(field)} = ${value}`
-      return result
+      const query = `SELECT * FROM ${tableName} WHERE ${field} = $1`
+      const result = await sql.query(query, [value])
+      return result.rows
     },
 
     async findOne(field: string, value: any) {
-      const result = await sql`SELECT * FROM ${sql(tableName)} WHERE ${sql(field)} = ${value} LIMIT 1`
-      return result[0] || null
+      const query = `SELECT * FROM ${tableName} WHERE ${field} = $1 LIMIT 1`
+      const result = await sql.query(query, [value])
+      return result.rows[0] || null
     },
   }
 }
