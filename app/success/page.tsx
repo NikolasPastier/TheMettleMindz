@@ -82,7 +82,18 @@ export default function SuccessPage() {
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}))
           console.error("[v0] Session verification failed:", errorData)
-          throw new Error(errorData.error || `HTTP ${response.status}: Failed to verify payment`)
+
+          let errorMessage = "Unable to verify your purchase"
+
+          if (response.status === 404) {
+            errorMessage = "Session not found. Please check your payment confirmation email or contact support."
+          } else if (response.status === 400) {
+            errorMessage = errorData.error || "Invalid session. Please try again or contact support."
+          } else if (response.status === 500) {
+            errorMessage = "Server error during verification. Please contact support with your order details."
+          }
+
+          throw new Error(errorMessage)
         }
 
         const data = await response.json()
@@ -326,7 +337,7 @@ export default function SuccessPage() {
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
                                   strokeWidth={2}
-                                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                  d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h1m4 0h1m6-10V7a3 3 0 00-3-3H6a3 3 0 00-3 3v4a3 3 0 003 3h7m3-10l3 3m-3-3v8"
                                 />
                               </svg>
                               {getActionText(item.id)}
