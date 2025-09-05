@@ -2,7 +2,7 @@ import { neon } from "@neondatabase/serverless"
 
 const getDatabaseUrl = () => {
   const possibleUrls = [
-    process.env.NEON_DATABASE_URL,
+    process.env.NEON_NEON_DATABASE_URL,
     process.env.NEON_DATABASE_URL,
     process.env.NEON_POSTGRES_URL,
     process.env.POSTGRES_URL,
