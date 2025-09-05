@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import type { CartItem } from "@/contexts/cart-context"
+import { createClient } from "@/lib/supabase/client"
 
 interface CheckoutResponse {
   sessionId: string
@@ -17,7 +18,7 @@ export function useCheckout() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const redirectToCheckout = async (items: CartItem[], discount?: Discount | null, userEmail?: string) => {
+  const redirectToCheckout = async (items: CartItem[], discount?: Discount | null) => {
     try {
       setIsLoading(true)
       setError(null)
@@ -26,9 +27,17 @@ export function useCheckout() {
         throw new Error("No items in cart")
       }
 
-      if (!userEmail) {
-        throw new Error("User email is required for checkout")
+      const supabase = createClient()
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser()
+
+      if (authError || !user?.email) {
+        throw new Error("User must be logged in to checkout")
       }
+
+      const userEmail = user.email
 
       // Validate items have required fields
       const invalidItems = items.filter((item) => !item.id || !item.title || !item.price)
@@ -37,13 +46,14 @@ export function useCheckout() {
       }
 
       console.log("[v0] Creating checkout session for items:", items)
+      console.log("[v0] User email:", userEmail)
       if (discount) {
         console.log("[v0] Applying discount:", discount)
       }
 
       const requestBody = {
-        items,
-        user_email: userEmail, // Include user email in request
+        cartItems: items,
+        userEmail: userEmail,
         ...(discount && { discount }),
       }
 
@@ -66,13 +76,30 @@ export function useCheckout() {
 
       console.log("[v0] Checkout session created successfully:", data)
 
-      if (data.url) {
-        console.log("[v0] Redirecting to Stripe checkout URL:", data.url)
-        window.location.href = data.url
+      if (data.sessionId) {
+        // Load Stripe.js dynamically
+        const stripe = await import("@stripe/stripe-js").then((module) =>
+          module.loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!),
+        )
+
+        if (!stripe) {
+          throw new Error("Failed to load Stripe")
+        }
+
+        console.log("[v0] Redirecting to Stripe checkout with sessionId:", data.sessionId)
+
+        const { error: stripeError } = await stripe.redirectToCheckout({
+          sessionId: data.sessionId,
+        })
+
+        if (stripeError) {
+          throw new Error(stripeError.message || "Failed to redirect to checkout")
+        }
+
         return
       }
 
-      throw new Error("No checkout URL received from server")
+      throw new Error("No session ID received from server")
     } catch (err) {
       console.error("Checkout error:", err)
       setError(err instanceof Error ? err.message : "An unexpected error occurred")

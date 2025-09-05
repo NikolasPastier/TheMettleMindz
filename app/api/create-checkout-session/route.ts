@@ -35,19 +35,22 @@ export async function POST(request: NextRequest) {
 
     console.log("[v0] Base URL for checkout:", cleanBaseUrl)
 
-    const { items, discount, user_email } = await request.json()
+    const { cartItems, userEmail, discount } = await request.json()
 
-    if (!items || !Array.isArray(items) || items.length === 0) {
+    if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
       return NextResponse.json({ error: "No items provided" }, { status: 400 })
     }
 
-    if (!user_email) {
+    if (!userEmail) {
       return NextResponse.json({ error: "User email is required for checkout" }, { status: 400 })
     }
 
-    const originalTotal = items.reduce((sum: number, item: any) => sum + item.price * (item.quantity || 1), 0)
+    console.log("[v0] Processing checkout for user:", userEmail)
+    console.log("[v0] Cart items:", cartItems)
 
-    const lineItems = items.map((item: any) => {
+    const originalTotal = cartItems.reduce((sum: number, item: any) => sum + item.price * (item.quantity || 1), 0)
+
+    const lineItems = cartItems.map((item: any) => {
       let imageUrl = ""
       if (item.image) {
         if (item.image.startsWith("http://") || item.image.startsWith("https://")) {
@@ -96,24 +99,17 @@ export async function POST(request: NextRequest) {
 
     const finalTotal = Math.max(0, originalTotal - discountAmount)
 
-    const metadata = {
-      user_email: user_email.substring(0, 490), // Ensure under 500 chars
-      item_count: items.length.toString(),
-    }
-
-    const successUrl = `${cleanBaseUrl}/success?session_id={CHECKOUT_SESSION_ID}`
-    const cancelUrl = `${cleanBaseUrl}/cart`
-
-    console.log("[v0] Success URL:", successUrl)
-    console.log("[v0] Cancel URL:", cancelUrl)
-
     const sessionConfig: any = {
       mode: "payment",
       payment_method_types: ["card"],
       line_items: lineItems,
-      success_url: successUrl,
-      cancel_url: cancelUrl,
-      metadata,
+      success_url: `${cleanBaseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${cleanBaseUrl}/cart`,
+      customer_email: userEmail, // Set customer email as required
+      metadata: {
+        user_email: userEmail.substring(0, 490),
+        item_count: cartItems.length.toString(),
+      },
     }
 
     if (finalTotal === 0 && discountAmount > 0) {
@@ -172,8 +168,7 @@ export async function POST(request: NextRequest) {
     try {
       const supabase = createClient()
 
-      // Prepare products array for database storage
-      const productsData = items.map((item: any) => ({
+      const productsData = cartItems.map((item: any) => ({
         id: item.id,
         title: item.title,
         type: item.category || "Digital Product",
@@ -183,26 +178,24 @@ export async function POST(request: NextRequest) {
 
       const { error: dbError } = await supabase.from("checkout_sessions").insert({
         session_id: session.id,
-        user_email: user_email,
+        user_email: userEmail,
         products: productsData,
         total_amount: finalTotal,
-        status: "pending",
+        status: "pending", // Save with pending status as specified
       })
 
       if (dbError) {
         console.error("[v0] Failed to save checkout session to database:", dbError)
         // Don't fail the checkout, but log the error
       } else {
-        console.log("[v0] Checkout session saved to database:", session.id)
+        console.log("[v0] Cart saved to database with pending status for user:", userEmail)
       }
     } catch (dbError) {
       console.error("[v0] Database error saving checkout session:", dbError)
-      // Don't fail the checkout, but log the error
     }
 
     return NextResponse.json({
       sessionId: session.id,
-      url: session.url,
       success: true,
     })
   } catch (error) {
