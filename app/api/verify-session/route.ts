@@ -45,6 +45,25 @@ export async function GET(request: NextRequest) {
 
       let checkoutSession = null
       try {
+        console.log("[v0] Testing Supabase connection for session lookup...")
+
+        const { data: testData, error: testError } = await supabase.from("checkout_sessions").select("count").limit(1)
+
+        if (testError) {
+          console.error("[v0] Supabase connection failed during verification:", testError)
+          console.error("[v0] Error code:", testError.code)
+          console.error("[v0] Error message:", testError.message)
+          return NextResponse.json(
+            {
+              error: "Database connection failed. Please ensure Supabase is properly configured.",
+              details: `Supabase error: ${testError.message}`,
+            },
+            { status: 503 },
+          )
+        }
+
+        console.log("[v0] Supabase connection successful, looking up session...")
+
         const { data: sessionData, error: sessionError } = await supabase
           .from("checkout_sessions")
           .select("*")
@@ -53,17 +72,63 @@ export async function GET(request: NextRequest) {
 
         if (sessionError) {
           console.error("[v0] Error fetching checkout session from database:", sessionError)
+          console.error("[v0] Error code:", sessionError.code)
+          console.error("[v0] Error message:", sessionError.message)
+
+          if (sessionError.code === "PGRST116") {
+            console.error("[v0] No checkout session found in database for session_id:", sessionId)
+            console.error("[v0] This suggests the session was not saved during checkout creation")
+            return NextResponse.json(
+              {
+                error:
+                  "Checkout session not found in database. This may indicate a configuration issue during checkout creation.",
+                details: "Session was not saved to database during checkout",
+              },
+              { status: 404 },
+            )
+          }
         } else {
           checkoutSession = sessionData
           console.log("[v0] Found checkout session in database:", checkoutSession.id)
         }
       } catch (dbError) {
         console.error("[v0] Database error fetching checkout session:", dbError)
+        return NextResponse.json(
+          {
+            error: "Database error during session verification",
+            details: dbError instanceof Error ? dbError.message : "Unknown database error",
+          },
+          { status: 500 },
+        )
       }
 
       if (!checkoutSession) {
         console.error("[v0] No checkout session found in database for session_id:", sessionId)
-        return NextResponse.json({ error: "Checkout session not found in database" }, { status: 404 })
+        console.error("[v0] Available sessions check...")
+
+        try {
+          const { data: allSessions, error: allError } = await supabase
+            .from("checkout_sessions")
+            .select("session_id, created_at")
+            .order("created_at", { ascending: false })
+            .limit(5)
+
+          if (allError) {
+            console.error("[v0] Error checking existing sessions:", allError)
+          } else {
+            console.log("[v0] Recent sessions in database:", allSessions)
+          }
+        } catch (debugError) {
+          console.error("[v0] Error during session debugging:", debugError)
+        }
+
+        return NextResponse.json(
+          {
+            error: "Checkout session not found in database. Please contact support with your session ID.",
+            details: `Session ID ${sessionId} was not found. This may indicate a configuration issue.`,
+          },
+          { status: 404 },
+        )
       }
 
       let userId = null

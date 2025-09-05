@@ -168,6 +168,17 @@ export async function POST(request: NextRequest) {
     try {
       const supabase = createClient()
 
+      // Test Supabase connection first
+      console.log("[v0] Testing Supabase connection...")
+      const { data: testData, error: testError } = await supabase.from("checkout_sessions").select("count").limit(1)
+
+      if (testError) {
+        console.error("[v0] Supabase connection failed:", testError)
+        console.error("[v0] This will prevent session verification from working!")
+      } else {
+        console.log("[v0] Supabase connection successful")
+      }
+
       const productsData = cartItems.map((item: any) => ({
         id: item.id,
         title: item.title,
@@ -176,22 +187,34 @@ export async function POST(request: NextRequest) {
         quantity: item.quantity || 1,
       }))
 
-      const { error: dbError } = await supabase.from("checkout_sessions").insert({
-        session_id: session.id,
-        user_email: userEmail,
-        products: productsData,
-        total_amount: finalTotal,
-        status: "pending", // Save with pending status as specified
-      })
+      console.log("[v0] Attempting to save checkout session to database...")
+      console.log("[v0] Session ID:", session.id)
+      console.log("[v0] User email:", userEmail)
+      console.log("[v0] Products count:", productsData.length)
+
+      const { data: insertData, error: dbError } = await supabase
+        .from("checkout_sessions")
+        .insert({
+          session_id: session.id,
+          user_email: userEmail,
+          products: productsData,
+          total_amount: finalTotal,
+          status: "pending",
+        })
+        .select()
 
       if (dbError) {
         console.error("[v0] Failed to save checkout session to database:", dbError)
-        // Don't fail the checkout, but log the error
+        console.error("[v0] Error code:", dbError.code)
+        console.error("[v0] Error message:", dbError.message)
+        console.error("[v0] This will cause session verification to fail!")
       } else {
+        console.log("[v0] Checkout session saved successfully to database:", insertData)
         console.log("[v0] Cart saved to database with pending status for user:", userEmail)
       }
     } catch (dbError) {
       console.error("[v0] Database error saving checkout session:", dbError)
+      console.error("[v0] This will prevent session verification from working!")
     }
 
     return NextResponse.json({
