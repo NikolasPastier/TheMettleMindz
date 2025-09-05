@@ -47,7 +47,7 @@ export default function ChampionMindsetLanding() {
   const handleDownloadWallpaper = () => {
     window.open(
       process.env.NEXT_PUBLIC_WALLPAPER_PACK_URL ||
-        "https://drive.google.com/drive/folders/16eDnU8h_yHI6lzxwNGHJvaZ7OjxLc0pb?usp=drive_link",
+        "https://drive.google.com/uc?export=download&id=1igVDqidEg0UnI-hVYyYHbYUBSxWGP5aS",
       "_blank",
     )
   }

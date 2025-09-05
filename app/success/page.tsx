@@ -140,7 +140,7 @@ export default function SuccessPage() {
       "theme-page-masterclass": "/course/theme-page-masterclass", // Link to course page instead of download
       "theme-page-masterclass-ebook":
         "https://drive.google.com/uc?export=download&id=1UEEeyznbNAlU2ryw-nPVxL6FNrEeiUjO",
-      "viral-clip-pack-bundle": "https://drive.google.com/uc?export=download&id=VIRAL_CLIP_PACK_FILE_ID",
+      "viral-clip-pack-bundle": "https://drive.google.com/uc?export=download&id=1yqyU1kv5-jZv5XNDWZ5e1yEok0KTjMP0",
     }
     return downloadLinks[itemId] || `/downloads/${itemId}.pdf`
   }
@@ -454,7 +454,7 @@ export default function SuccessPage() {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M3 12l2-2m0 0l7-7 7 7M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                        d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                       />
                     </svg>
                     Return Home

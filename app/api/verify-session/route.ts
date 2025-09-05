@@ -67,25 +67,29 @@ export async function GET(request: NextRequest) {
       const purchaseResults = []
       for (const item of lineItems) {
         try {
-          // Extract product ID from metadata or price.product
           let productId = null
 
-          if (item.price?.product && typeof item.price.product === "object") {
-            productId = item.price.product.metadata?.product_id || item.price.product.id
-          } else if (typeof item.price?.product === "string") {
-            productId = item.price.product
-          }
-
-          // Fallback to session metadata
-          if (!productId && session.metadata?.items) {
+          // Primary method: Parse from session metadata
+          if (session.metadata?.items) {
             try {
               const items = JSON.parse(session.metadata.items)
-              if (Array.isArray(items) && items.length > 0) {
-                productId = items[0].id // Use first item as fallback
+              if (Array.isArray(items)) {
+                // Find matching item by price or use first item
+                const matchingItem =
+                  items.find((metaItem) => metaItem.price === (item.amount_total || 0) / 100 / (item.quantity || 1)) ||
+                  items[0]
+                productId = matchingItem?.product_id || matchingItem?.id
               }
             } catch (parseError) {
               console.error("[v0] Error parsing session metadata items:", parseError)
             }
+          }
+
+          // Fallback: Extract from Stripe product data
+          if (!productId && item.price?.product && typeof item.price.product === "object") {
+            productId = item.price.product.metadata?.product_id || item.price.product.id
+          } else if (!productId && typeof item.price?.product === "string") {
+            productId = item.price.product
           }
 
           if (!productId) {
@@ -95,13 +99,14 @@ export async function GET(request: NextRequest) {
 
           console.log("[v0] Saving purchase for product:", productId, "Amount:", item.amount_total || 0)
 
-          // Check if purchase already exists (idempotency)
           const { data: existingPurchase } = await supabase
             .from("purchases")
             .select("id")
             .eq("product_id", productId)
             .eq("status", "completed")
-            .or(userId ? `user_id.eq.${userId}` : `customer_email.eq.${customerEmail}`)
+            .or(
+              userId ? `user_id.eq.${userId},customer_email.eq.${customerEmail}` : `customer_email.eq.${customerEmail}`,
+            )
             .single()
 
           if (existingPurchase) {
@@ -114,9 +119,9 @@ export async function GET(request: NextRequest) {
             user_id: userId,
             customer_email: customerEmail,
             product_id: productId,
-            amount_paid: item.amount_total || 0, // This will be 0 for free purchases with discount codes
+            amount_paid: item.amount_total || 0, // Save 0 for free purchases with discount codes
             currency: session.currency || "usd",
-            status: "completed",
+            status: "completed", // Use "completed" for all successful purchases
             purchased_at: new Date().toISOString(),
             stripe_session_id: sessionId,
           }

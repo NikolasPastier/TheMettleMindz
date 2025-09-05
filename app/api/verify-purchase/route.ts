@@ -22,12 +22,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Product ID is required" }, { status: 400 })
     }
 
-    // Check if user has purchased this product
     const { data: purchase, error } = await supabase
       .from("purchases")
       .select("*")
-      .eq("user_id", user.id)
       .eq("product_id", productId)
+      .or(`user_id.eq.${user.id},customer_email.eq.${user.email}`)
       .in("status", ["completed", "paid"])
       .single()
 

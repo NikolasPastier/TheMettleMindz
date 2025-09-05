@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
           "theme-page-masterclass": `${request.nextUrl.origin}/course/theme-page-masterclass`,
           "theme-page-masterclass-ebook":
             "https://drive.google.com/uc?export=download&id=1UEEeyznbNAlU2ryw-nPVxL6FNrEeiUjO",
-          "viral-clip-pack-bundle": "https://drive.google.com/uc?export=download&id=VIRAL_CLIP_PACK_FILE_ID",
+          "viral-clip-pack-bundle": "https://drive.google.com/uc?export=download&id=1yqyU1kv5-jZv5XNDWZ5e1yEok0KTjMP0",
         }
         return {
           title: item.title,

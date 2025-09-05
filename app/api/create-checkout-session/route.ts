@@ -104,6 +104,7 @@ export async function POST(request: NextRequest) {
           title: item.title,
           price: item.price,
           quantity: item.quantity || 1,
+          product_id: item.id, // Ensure product_id is explicitly included
         })),
       ),
       ...(discount && {

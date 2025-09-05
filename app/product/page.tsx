@@ -77,7 +77,7 @@ export default function ProductPage() {
   }
 
   const handleViralClipPackDownload = () => {
-    const downloadUrl = "https://drive.google.com/uc?export=download&id=VIRAL_CLIP_PACK_FILE_ID"
+    const downloadUrl = "https://drive.google.com/uc?export=download&id=1yqyU1kv5-jZv5XNDWZ5e1yEok0KTjMP0"
     window.open(downloadUrl, "_blank")
   }
 
