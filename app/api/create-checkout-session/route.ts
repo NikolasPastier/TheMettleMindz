@@ -46,13 +46,10 @@ export async function POST(request: NextRequest) {
       let imageUrl = ""
       if (item.image) {
         if (item.image.startsWith("http://") || item.image.startsWith("https://")) {
-          // Already an absolute URL
           imageUrl = item.image
         } else if (item.image.startsWith("/")) {
-          // Relative path, convert to absolute URL
           imageUrl = `${cleanBaseUrl}${item.image}`
         } else {
-          // Relative path without leading slash
           imageUrl = `${cleanBaseUrl}/${item.image}`
         }
       }
@@ -64,16 +61,20 @@ export async function POST(request: NextRequest) {
             name: item.title,
             description: item.category || "Digital Product",
             images: imageUrl ? [imageUrl] : [],
+            metadata: {
+              product_id: item.id, // Include product_id in product metadata
+            },
           },
           unit_amount: Math.round(item.price * 100), // Convert to cents
         },
-        quantity: item.quantity || 1,
+        quantity: 1, // Always set to 1 for digital products
       }
     })
 
     let discountAmount = 0
-    if (discount && discount.code && discount.amount) {
-      // Server-side validation of discount code
+    const validCouponId = null
+
+    if (discount && discount.code) {
       const validDiscountCodes = {
         DISCOUNT100: { type: "percentage", value: 100 },
       }
@@ -90,8 +91,7 @@ export async function POST(request: NextRequest) {
 
     const finalTotal = Math.max(0, originalTotal - discountAmount)
 
-    if (finalTotal === 0) {
-      // For free products, create a session with $0.01 and then apply 100% discount
+    if (finalTotal === 0 && discountAmount > 0) {
       lineItems.forEach((item) => {
         item.price_data.unit_amount = 1 // $0.01 minimum for Stripe
       })
@@ -102,17 +102,18 @@ export async function POST(request: NextRequest) {
         items.map((item: any) => ({
           id: item.id,
           title: item.title,
+          product_id: item.id, // Explicitly include product_id for v0 compatibility
           price: item.price,
           quantity: item.quantity || 1,
-          product_id: item.id, // Ensure product_id is explicitly included
         })),
       ),
-      ...(discount && {
-        discount_code: discount.code,
-        discount_amount: discountAmount.toString(),
-        original_total: originalTotal.toString(),
-        final_total: finalTotal.toString(),
-      }),
+      original_total: originalTotal.toString(),
+      final_total: finalTotal.toString(),
+      ...(discount &&
+        discount.code && {
+          discount_code: discount.code,
+          discount_amount: discountAmount.toString(),
+        }),
     }
 
     const successUrl = `${cleanBaseUrl}/success?session_id={CHECKOUT_SESSION_ID}`
@@ -131,7 +132,6 @@ export async function POST(request: NextRequest) {
     }
 
     if (finalTotal === 0 && discountAmount > 0) {
-      // Create a 100% discount coupon for free products
       try {
         const coupon = await stripe.coupons.create({
           percent_off: 100,
@@ -139,23 +139,52 @@ export async function POST(request: NextRequest) {
           name: `${discount.code} - 100% Off`,
         })
         sessionConfig.discounts = [{ coupon: coupon.id }]
+        console.log("[v0] Created 100% discount coupon:", coupon.id)
       } catch (couponError) {
-        console.error("Error creating discount coupon:", couponError)
-        // Fallback: allow the session to proceed without the coupon
+        console.error("[v0] Error creating discount coupon:", couponError)
+        return NextResponse.json(
+          {
+            error: "Failed to apply discount code",
+            details: couponError instanceof Error ? couponError.message : "Unknown coupon error",
+          },
+          { status: 400 },
+        )
       }
     }
 
     const session = await stripe.checkout.sessions.create(sessionConfig)
 
+    console.log("[v0] Checkout session created:", session.id)
     return NextResponse.json({
       sessionId: session.id,
       url: session.url,
     })
   } catch (error) {
-    console.error("Error creating checkout session:", error)
+    console.error("[v0] Error creating checkout session:", error)
+
+    let errorMessage = "Failed to create checkout session"
+    let errorDetails = "Unknown error"
+
     if (error instanceof Error) {
-      console.error("Error details:", error.message)
+      errorDetails = error.message
+      console.error("[v0] Error details:", error.message)
+
+      // Handle specific Stripe errors
+      if (error.message.includes("Invalid")) {
+        errorMessage = "Invalid checkout configuration"
+      } else if (error.message.includes("currency")) {
+        errorMessage = "Currency configuration error"
+      } else if (error.message.includes("amount")) {
+        errorMessage = "Invalid amount specified"
+      }
     }
-    return NextResponse.json({ error: "Failed to create checkout session" }, { status: 500 })
+
+    return NextResponse.json(
+      {
+        error: errorMessage,
+        details: errorDetails,
+      },
+      { status: 500 },
+    )
   }
 }
