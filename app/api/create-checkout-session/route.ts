@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { stripe } from "@/lib/stripe-server"
+import { createClient } from "@/lib/supabase/server"
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,10 +35,14 @@ export async function POST(request: NextRequest) {
 
     console.log("[v0] Base URL for checkout:", cleanBaseUrl)
 
-    const { items, discount } = await request.json()
+    const { items, discount, user_email } = await request.json()
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: "No items provided" }, { status: 400 })
+    }
+
+    if (!user_email) {
+      return NextResponse.json({ error: "User email is required for checkout" }, { status: 400 })
     }
 
     const originalTotal = items.reduce((sum: number, item: any) => sum + item.price * (item.quantity || 1), 0)
@@ -91,17 +96,9 @@ export async function POST(request: NextRequest) {
 
     const finalTotal = Math.max(0, originalTotal - discountAmount)
 
-    const productIds = items.map((item: any) => item.id).join(",")
     const metadata = {
-      product_ids: productIds.substring(0, 490), // Ensure under 500 chars
+      user_email: user_email.substring(0, 490), // Ensure under 500 chars
       item_count: items.length.toString(),
-      original_total: originalTotal.toFixed(2),
-      final_total: finalTotal.toFixed(2),
-      ...(discount &&
-        discount.code && {
-          discount_code: discount.code,
-          discount_amount: discountAmount.toFixed(2),
-        }),
     }
 
     const successUrl = `${cleanBaseUrl}/success?session_id={CHECKOUT_SESSION_ID}`
@@ -170,6 +167,37 @@ export async function POST(request: NextRequest) {
         },
         { status: 400 },
       )
+    }
+
+    try {
+      const supabase = createClient()
+
+      // Prepare products array for database storage
+      const productsData = items.map((item: any) => ({
+        id: item.id,
+        title: item.title,
+        type: item.category || "Digital Product",
+        price: item.price,
+        quantity: item.quantity || 1,
+      }))
+
+      const { error: dbError } = await supabase.from("checkout_sessions").insert({
+        session_id: session.id,
+        user_email: user_email,
+        products: productsData,
+        total_amount: finalTotal,
+        status: "pending",
+      })
+
+      if (dbError) {
+        console.error("[v0] Failed to save checkout session to database:", dbError)
+        // Don't fail the checkout, but log the error
+      } else {
+        console.log("[v0] Checkout session saved to database:", session.id)
+      }
+    } catch (dbError) {
+      console.error("[v0] Database error saving checkout session:", dbError)
+      // Don't fail the checkout, but log the error
     }
 
     return NextResponse.json({

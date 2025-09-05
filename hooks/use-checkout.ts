@@ -17,13 +17,17 @@ export function useCheckout() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const redirectToCheckout = async (items: CartItem[], discount?: Discount | null) => {
+  const redirectToCheckout = async (items: CartItem[], discount?: Discount | null, userEmail?: string) => {
     try {
       setIsLoading(true)
       setError(null)
 
       if (!items || items.length === 0) {
         throw new Error("No items in cart")
+      }
+
+      if (!userEmail) {
+        throw new Error("User email is required for checkout")
       }
 
       // Validate items have required fields
@@ -39,6 +43,7 @@ export function useCheckout() {
 
       const requestBody = {
         items,
+        user_email: userEmail, // Include user email in request
         ...(discount && { discount }),
       }
 
