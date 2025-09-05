@@ -62,17 +62,17 @@ export async function POST(request: NextRequest) {
             description: item.category || "Digital Product",
             images: imageUrl ? [imageUrl] : [],
             metadata: {
-              product_id: item.id, // Include product_id in product metadata
+              product_id: item.id,
             },
           },
-          unit_amount: Math.round(item.price * 100), // Convert to cents
+          unit_amount: Math.max(0, Math.round(item.price * 100)), // Allow $0.00 for free items
         },
-        quantity: 1, // Always set to 1 for digital products
+        quantity: item.quantity || 1,
       }
     })
 
     let discountAmount = 0
-    const validCouponId = null
+    let validCouponId = null
 
     if (discount && discount.code) {
       const validDiscountCodes = {
@@ -91,28 +91,16 @@ export async function POST(request: NextRequest) {
 
     const finalTotal = Math.max(0, originalTotal - discountAmount)
 
-    if (finalTotal === 0 && discountAmount > 0) {
-      lineItems.forEach((item) => {
-        item.price_data.unit_amount = 1 // $0.01 minimum for Stripe
-      })
-    }
-
+    const productIds = items.map((item: any) => item.id).join(",")
     const metadata = {
-      items: JSON.stringify(
-        items.map((item: any) => ({
-          id: item.id,
-          title: item.title,
-          product_id: item.id, // Explicitly include product_id for v0 compatibility
-          price: item.price,
-          quantity: item.quantity || 1,
-        })),
-      ),
-      original_total: originalTotal.toString(),
-      final_total: finalTotal.toString(),
+      product_ids: productIds.substring(0, 490), // Ensure under 500 chars
+      item_count: items.length.toString(),
+      original_total: originalTotal.toFixed(2),
+      final_total: finalTotal.toFixed(2),
       ...(discount &&
         discount.code && {
           discount_code: discount.code,
-          discount_amount: discountAmount.toString(),
+          discount_amount: discountAmount.toFixed(2),
         }),
     }
 
@@ -139,6 +127,7 @@ export async function POST(request: NextRequest) {
           name: `${discount.code} - 100% Off`,
         })
         sessionConfig.discounts = [{ coupon: coupon.id }]
+        validCouponId = coupon.id
         console.log("[v0] Created 100% discount coupon:", coupon.id)
       } catch (couponError) {
         console.error("[v0] Error creating discount coupon:", couponError)
@@ -152,12 +141,41 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const session = await stripe.checkout.sessions.create(sessionConfig)
+    let session
+    try {
+      session = await stripe.checkout.sessions.create(sessionConfig)
+      console.log("[v0] Checkout session created successfully:", session.id)
+    } catch (stripeError) {
+      console.error("[v0] Stripe session creation failed:", stripeError)
 
-    console.log("[v0] Checkout session created:", session.id)
+      let errorMessage = "Failed to create checkout session"
+      let errorDetails = "Unknown Stripe error"
+
+      if (stripeError instanceof Error) {
+        errorDetails = stripeError.message
+
+        if (stripeError.message.includes("metadata")) {
+          errorMessage = "Checkout data too large"
+        } else if (stripeError.message.includes("line_items")) {
+          errorMessage = "Invalid product configuration"
+        } else if (stripeError.message.includes("amount")) {
+          errorMessage = "Invalid price amount"
+        }
+      }
+
+      return NextResponse.json(
+        {
+          error: errorMessage,
+          details: errorDetails,
+        },
+        { status: 400 },
+      )
+    }
+
     return NextResponse.json({
       sessionId: session.id,
       url: session.url,
+      success: true,
     })
   } catch (error) {
     console.error("[v0] Error creating checkout session:", error)
