@@ -1,6 +1,27 @@
 import { neon } from "@neondatabase/serverless"
 
-const sql = neon(process.env.NEON_NEON_NEON_DATABASE_URL!)
+const getDatabaseUrl = () => {
+  const possibleUrls = [
+    process.env.NEON_DATABASE_URL,
+    process.env.NEON_DATABASE_URL,
+    process.env.NEON_POSTGRES_URL,
+    process.env.POSTGRES_URL,
+  ]
+
+  const url = possibleUrls.find((url) => url && url.length > 0)
+
+  if (!url) {
+    throw new Error(
+      `No database connection string found. Checked: ${possibleUrls
+        .map((_, i) => ["DATABASE_URL", "NEON_DATABASE_URL", "NEON_POSTGRES_URL", "POSTGRES_URL"][i])
+        .join(", ")}`,
+    )
+  }
+
+  return url
+}
+
+const sql = neon(getDatabaseUrl())
 
 interface DbTable {
   get: (id: string) => Promise<any>
