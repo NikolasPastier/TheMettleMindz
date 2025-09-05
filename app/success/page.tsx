@@ -25,11 +25,7 @@ interface SessionData {
   amount_total: number
   currency: string
   created: number
-  metadata: {
-    items: string
-    total_items?: string
-  }
-  line_items?: any[]
+  products?: PurchasedItem[]
 }
 
 export default function SuccessPage() {
@@ -86,11 +82,12 @@ export default function SuccessPage() {
           let errorMessage = "Unable to verify your purchase"
 
           if (response.status === 404) {
-            errorMessage = "Session not found. Please check your payment confirmation email or contact support."
+            errorMessage =
+              "Session not found in database. Please check your payment confirmation email or contact support."
           } else if (response.status === 400) {
-            errorMessage = errorData.error || "Invalid session. Please try again or contact support."
+            errorMessage = errorData.error || "Invalid session ID. Please try again or contact support."
           } else if (response.status === 500) {
-            errorMessage = "Server error during verification. Please contact support with your order details."
+            errorMessage = `Database error: ${errorData.details || "Please contact support with your order details."}`
           }
 
           throw new Error(errorMessage)
@@ -101,12 +98,11 @@ export default function SuccessPage() {
           sessionId: data.session?.id,
           purchasesSaved: data.purchasesSaved,
           cartCleared: data.cartCleared,
-          emailSent: data.emailSent,
           isFree: data.isFree,
         })
 
         if (!data.session) {
-          throw new Error("Invalid session data received")
+          throw new Error("Invalid session data received from v0 database")
         }
 
         setSessionData(data.session)
@@ -119,24 +115,15 @@ export default function SuccessPage() {
           console.log("[v0] Frontend cart cleared")
         }
 
-        if (data.session.metadata?.items) {
-          try {
-            const items = JSON.parse(data.session.metadata.items)
-            if (Array.isArray(items)) {
-              console.log("[v0] Parsed purchased items:", items.length)
-              setPurchasedItems(items)
-            } else {
-              console.error("[v0] Items is not an array:", items)
-            }
-          } catch (parseError) {
-            console.error("[v0] Error parsing purchased items:", parseError)
-          }
+        if (data.session.products && Array.isArray(data.session.products)) {
+          console.log("[v0] Parsed purchased products:", data.session.products.length)
+          setPurchasedItems(data.session.products)
         } else {
-          console.log("[v0] No items metadata found in session")
+          console.log("[v0] No products found in session data")
         }
       } catch (err) {
         console.error("[v0] Session verification error:", err)
-        setError(err instanceof Error ? err.message : "Unable to verify your purchase")
+        setError(err instanceof Error ? err.message : "Unable to verify your purchase with v0 database")
       } finally {
         setLoading(false)
       }

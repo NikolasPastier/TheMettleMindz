@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { stripe } from "@/lib/stripe-server"
-import { createServerClient } from "@/lib/supabase/server"
-import { cookies } from "next/headers"
+import { db } from "@/lib/db"
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,107 +11,22 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Session ID is required" }, { status: 400 })
     }
 
-    if (!stripe) {
-      console.error("[v0] Stripe is not configured. Missing STRIPE_SECRET_KEY environment variable.")
-      return NextResponse.json(
-        { error: "Payment verification is currently unavailable. Please contact support." },
-        { status: 500 },
-      )
-    }
-
     console.log("[v0] Verifying session:", sessionId)
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-    if (!supabaseUrl || !supabaseAnonKey) {
-      console.error("[v0] Supabase environment variables not configured")
-      return NextResponse.json(
-        {
-          error: "Database connection failed. Please ensure Supabase is properly configured.",
-          details: "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables",
-        },
-        { status: 500 },
-      )
+    if (!stripe) {
+      console.error("[v0] Stripe is not configured")
+      return NextResponse.json({ error: "Payment verification is currently unavailable" }, { status: 500 })
     }
 
-    let session
+    let checkoutSession
     try {
-      session = await stripe.checkout.sessions.retrieve(sessionId, {
-        expand: ["line_items", "line_items.data.price.product", "customer", "payment_intent"],
-      })
+      checkoutSession = await db.checkout_sessions.findOne("session_id", sessionId)
 
-      console.log("[v0] Session retrieved from Stripe:", {
-        id: session.id,
-        payment_status: session.payment_status,
-        customer_email: session.customer_details?.email,
-        amount_total: session.amount_total,
-      })
-    } catch (stripeError) {
-      console.error("[v0] Stripe API error:", stripeError)
-      if (stripeError instanceof Error && stripeError.message.includes("No such checkout session")) {
+      if (!checkoutSession) {
+        console.log("[v0] Checkout session not found in database:", sessionId)
         return NextResponse.json({ error: "Session not found" }, { status: 404 })
       }
-      return NextResponse.json(
-        {
-          error: "Failed to retrieve session from Stripe",
-          details: stripeError instanceof Error ? stripeError.message : "Unknown Stripe error",
-        },
-        { status: 500 },
-      )
-    }
 
-    if (session.payment_status !== "paid" && session.payment_status !== "no_payment_required") {
-      console.log("[v0] Payment not completed, status:", session.payment_status)
-      return NextResponse.json({ error: "Payment not completed" }, { status: 400 })
-    }
-
-    let supabase
-    try {
-      const cookieStore = cookies()
-      supabase = createServerClient(cookieStore)
-    } catch (supabaseInitError) {
-      console.error("[v0] Failed to initialize Supabase client:", supabaseInitError)
-      return NextResponse.json(
-        {
-          error: "Database connection failed during initialization",
-          details: supabaseInitError instanceof Error ? supabaseInitError.message : "Unknown database error",
-        },
-        { status: 500 },
-      )
-    }
-
-    let checkoutSession = null
-    try {
-      const { data: sessionData, error: sessionError } = await supabase
-        .from("checkout_sessions")
-        .select("*")
-        .eq("session_id", sessionId)
-        .single()
-
-      if (sessionError) {
-        console.error("[v0] Database error fetching checkout session:", sessionError)
-
-        if (sessionError.code === "PGRST116") {
-          return NextResponse.json(
-            {
-              error: "Checkout session not found in database",
-              details: "Session was not saved during checkout creation",
-            },
-            { status: 404 },
-          )
-        }
-
-        return NextResponse.json(
-          {
-            error: "Database error during session verification",
-            details: sessionError.message,
-          },
-          { status: 500 },
-        )
-      }
-
-      checkoutSession = sessionData
       console.log("[v0] Found checkout session in database:", checkoutSession.id)
     } catch (dbError) {
       console.error("[v0] Database error during session lookup:", dbError)
@@ -125,23 +39,35 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    let userId = null
+    let stripeSession
     try {
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser()
-      if (!authError && user) {
-        userId = user.id
-        console.log("[v0] User authenticated:", user.email)
-      } else {
-        console.log("[v0] No authenticated user, will save by email")
-      }
-    } catch (authError) {
-      console.log("[v0] Auth check failed, continuing as guest")
+      stripeSession = await stripe.checkout.sessions.retrieve(sessionId, {
+        expand: ["line_items", "customer"],
+      })
+
+      console.log("[v0] Session retrieved from Stripe:", {
+        id: stripeSession.id,
+        payment_status: stripeSession.payment_status,
+        customer_email: stripeSession.customer_details?.email,
+        amount_total: stripeSession.amount_total,
+      })
+    } catch (stripeError) {
+      console.error("[v0] Stripe API error:", stripeError)
+      return NextResponse.json(
+        {
+          error: "Failed to retrieve session from Stripe",
+          details: stripeError instanceof Error ? stripeError.message : "Unknown Stripe error",
+        },
+        { status: 500 },
+      )
     }
 
-    const customerEmail = session.customer_details?.email || checkoutSession.user_email
+    if (stripeSession.payment_status !== "paid" && stripeSession.payment_status !== "no_payment_required") {
+      console.log("[v0] Payment not completed, status:", stripeSession.payment_status)
+      return NextResponse.json({ error: "Payment not completed" }, { status: 400 })
+    }
+
+    const customerEmail = stripeSession.customer_details?.email || checkoutSession.user_email
     const products = checkoutSession.products || []
 
     console.log("[v0] Processing", products.length, "products for purchase recording")
@@ -156,15 +82,11 @@ export async function GET(request: NextRequest) {
           continue
         }
 
-        console.log("[v0] Saving purchase for product:", productId, "Amount:", product.price)
-
-        const { data: existingPurchase } = await supabase
-          .from("purchases")
-          .select("id")
-          .eq("product_id", productId)
-          .eq("status", "completed")
-          .or(userId ? `user_id.eq.${userId},customer_email.eq.${customerEmail}` : `customer_email.eq.${customerEmail}`)
-          .single()
+        const existingPurchases = await db.purchases.findBy("product_id", productId)
+        const existingPurchase = existingPurchases.find(
+          (p) =>
+            p.status === "completed" && (p.customer_email === customerEmail || p.user_id === checkoutSession.user_id),
+        )
 
         if (existingPurchase) {
           console.log("[v0] Purchase already exists for product:", productId)
@@ -173,105 +95,68 @@ export async function GET(request: NextRequest) {
         }
 
         const purchaseData = {
-          user_id: userId,
+          id: crypto.randomUUID(),
+          user_id: checkoutSession.user_id || null,
           customer_email: customerEmail,
           product_id: productId,
-          amount_paid: product.price * (product.quantity || 1) * 100,
-          currency: session.currency || "usd",
+          amount: product.price * (product.quantity || 1) * 100,
+          currency: stripeSession.currency || "usd",
           status: "completed",
           purchased_at: new Date().toISOString(),
           stripe_session_id: sessionId,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         }
 
-        const { error: insertError } = await supabase.from("purchases").insert(purchaseData)
-
-        if (insertError) {
-          console.error("[v0] Error inserting purchase:", insertError)
-          purchaseResults.push({ productId, status: "error", error: insertError.message })
-        } else {
-          console.log("[v0] Purchase saved successfully for product:", productId)
-          purchaseResults.push({ productId, status: "saved", amountPaid: product.price })
-        }
+        await db.purchases.insert(purchaseData)
+        console.log("[v0] Purchase saved successfully for product:", productId)
+        purchaseResults.push({ productId, status: "saved", amountPaid: product.price })
       } catch (itemError) {
         console.error("[v0] Error processing product:", itemError)
-        purchaseResults.push({ productId: product.id || "unknown", status: "error", error: itemError.message })
+        purchaseResults.push({
+          productId: product.id || "unknown",
+          status: "error",
+          error: itemError instanceof Error ? itemError.message : "Unknown error",
+        })
       }
     }
 
     try {
-      const { error: updateError } = await supabase
-        .from("checkout_sessions")
-        .update({ status: "completed" })
-        .eq("session_id", sessionId)
-
-      if (updateError) {
-        console.error("[v0] Error updating checkout session status:", updateError)
-      } else {
-        console.log("[v0] Checkout session marked as completed")
-      }
+      await db.checkout_sessions.update(checkoutSession.id, {
+        status: "completed",
+        updated_at: new Date().toISOString(),
+      })
+      console.log("[v0] Checkout session marked as completed")
     } catch (updateError) {
       console.error("[v0] Error updating checkout session:", updateError)
     }
 
-    if (userId) {
+    if (checkoutSession.user_id) {
       try {
-        const { error: cartError } = await supabase.from("cart").delete().eq("user_id", userId)
-
-        if (cartError) {
-          console.error("[v0] Error clearing cart:", cartError)
-        } else {
-          console.log("[v0] Cart cleared for user:", userId)
+        const cartItems = await db.cart.findBy("user_id", checkoutSession.user_id)
+        for (const item of cartItems) {
+          await db.cart.delete(item.id)
         }
+        console.log("[v0] Cart cleared for user:", checkoutSession.user_id)
       } catch (cartError) {
         console.error("[v0] Error clearing cart:", cartError)
       }
     }
 
-    let emailSent = false
-    try {
-      if (customerEmail && process.env.RESEND_API_KEY) {
-        const emailResponse = await fetch(`${request.nextUrl.origin}/api/send-confirmation-email`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: customerEmail,
-            customerName: session.customer_details?.name,
-            sessionId: sessionId,
-            items: products,
-            totalAmount: checkoutSession.total_amount * 100,
-            currency: session.currency,
-            isFree: checkoutSession.total_amount === 0,
-          }),
-        })
-
-        if (emailResponse.ok) {
-          console.log("[v0] Confirmation email sent successfully")
-          emailSent = true
-        } else {
-          console.error("[v0] Failed to send confirmation email:", await emailResponse.text())
-        }
-      }
-    } catch (emailError) {
-      console.error("[v0] Error sending confirmation email:", emailError)
-    }
-
     return NextResponse.json({
       session: {
-        id: session.id,
-        payment_status: session.payment_status,
+        id: stripeSession.id,
+        payment_status: stripeSession.payment_status,
         customer_email: customerEmail,
-        customer_name: session.customer_details?.name,
+        customer_name: stripeSession.customer_details?.name,
         amount_total: checkoutSession.total_amount * 100,
-        currency: session.currency,
-        created: session.created,
+        currency: stripeSession.currency,
+        created: stripeSession.created,
         products: products,
       },
       purchasesSaved: purchaseResults.filter((p) => p.status === "saved" || p.status === "already_exists").length > 0,
       purchaseResults,
-      cartCleared: !!userId,
-      emailSent,
+      cartCleared: !!checkoutSession.user_id,
       isFree: checkoutSession.total_amount === 0,
     })
   } catch (error) {
