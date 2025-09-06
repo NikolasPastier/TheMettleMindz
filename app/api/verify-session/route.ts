@@ -144,18 +144,29 @@ export async function GET(request: NextRequest) {
           id: randomUUID(),
           user_id: checkoutSession.user_id || null, // Use user_id from checkout session
           product_id: productId,
+          customer_email: customerEmail, // Add customer_email for guest fallback
           amount: product.price * (product.quantity || 1) * 100,
           currency: stripeSession.currency || "usd",
           status: "completed",
-          purchased_at: new Date().toISOString(),
+          purchased_at: new Date().toISOString(), // Add purchased_at timestamp
           stripe_session_id: sessionId,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         }
 
-        await db.purchases.insert(purchaseData)
-        console.log("[v0] Purchase saved successfully for product:", productId, "for user:", checkoutSession.user_id)
-        purchaseResults.push({ productId, status: "saved", amountPaid: product.price })
+        try {
+          await db.purchases.insert(purchaseData)
+          console.log("[v0] Purchase saved successfully for product:", productId, "for user:", checkoutSession.user_id)
+          purchaseResults.push({ productId, status: "saved", amountPaid: product.price })
+        } catch (insertError) {
+          // Check if it's a duplicate key error
+          if (insertError instanceof Error && insertError.message.includes("duplicate")) {
+            console.log("[v0] Purchase already exists (duplicate key) for product:", productId)
+            purchaseResults.push({ productId, status: "already_exists" })
+          } else {
+            throw insertError // Re-throw if it's not a duplicate error
+          }
+        }
       } catch (itemError) {
         console.error("[v0] Error processing product:", itemError)
         purchaseResults.push({

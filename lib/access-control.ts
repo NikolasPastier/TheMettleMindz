@@ -20,18 +20,19 @@ export async function checkCourseAccess(productId: string): Promise<AccessContro
     }
 
     // Check if user has purchased this product
-    const { data: purchase, error } = await supabase
+    const { data: purchases, error } = await supabase
       .from("purchases")
       .select("*")
-      .eq("user_id", user.id)
       .eq("product_id", productId)
       .eq("status", "completed")
-      .single()
+      .or(`user_id.eq.${user.id},customer_email.eq.${user.email}`)
 
     if (error && error.code !== "PGRST116") {
       console.error("Error checking purchase:", error)
       return { hasAccess: false, error: "Failed to verify access" }
     }
+
+    const purchase = purchases && purchases.length > 0 ? purchases[0] : null
 
     return {
       hasAccess: !!purchase,

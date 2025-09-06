@@ -37,6 +37,7 @@ export function useCheckout() {
         throw new Error("User must be logged in to checkout")
       }
 
+      const userId = user.id
       const userEmail = user.email
 
       // Validate items have required fields
@@ -46,6 +47,7 @@ export function useCheckout() {
       }
 
       console.log("[v0] Creating checkout session for items:", items)
+      console.log("[v0] User ID:", userId)
       console.log("[v0] User email:", userEmail)
       if (discount) {
         console.log("[v0] Applying discount:", discount)
@@ -53,6 +55,7 @@ export function useCheckout() {
 
       const requestBody = {
         cartItems: items,
+        userId: userId,
         userEmail: userEmail,
         ...(discount && { discount }),
       }

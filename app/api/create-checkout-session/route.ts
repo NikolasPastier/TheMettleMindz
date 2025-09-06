@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
 
     console.log("[v0] Base URL for checkout:", cleanBaseUrl)
 
-    const { cartItems, userEmail, discount } = await request.json()
+    const { cartItems, userId, userEmail, discount } = await request.json()
 
     if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
       return NextResponse.json({ error: "No items provided" }, { status: 400 })
@@ -44,26 +44,6 @@ export async function POST(request: NextRequest) {
 
     if (!userEmail) {
       return NextResponse.json({ error: "User email is required for checkout" }, { status: 400 })
-    }
-
-    let userId = null
-    try {
-      const { createServerClient } = await import("@/lib/supabase/server")
-      const { cookies } = await import("next/headers")
-      const supabase = createServerClient(cookies())
-
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser()
-      if (user && !authError) {
-        userId = user.id
-        console.log("[v0] Found authenticated user:", userId)
-      } else {
-        console.log("[v0] No authenticated user found, proceeding with email only")
-      }
-    } catch (authError) {
-      console.error("[v0] Error getting user from auth:", authError)
     }
 
     console.log("[v0] Processing checkout for user:", userEmail)
@@ -209,7 +189,7 @@ export async function POST(request: NextRequest) {
         id: randomUUID(),
         session_id: session.id,
         user_email: userEmail,
-        user_id: userId,
+        user_id: userId, // Use userId from request body instead of trying to get from auth
         products: productsData,
         total_amount: finalTotal,
         status: "pending",
