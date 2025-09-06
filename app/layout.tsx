@@ -30,6 +30,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={poppins.variable}>
+      <head>
+        <link rel="icon" href="/images/phoenix-logo.png" type="image/png" />
+        <link rel="shortcut icon" href="/images/phoenix-logo.png" type="image/png" />
+      </head>
       <body className="font-sans">
         <AuthProvider>
           <CartProvider>
