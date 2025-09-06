@@ -91,6 +91,8 @@ export default function AccountPage() {
           type: "E-Book",
           hasAccess: true,
           accessUrl: "/products/champions-mindset",
+          downloadUrl: "https://drive.google.com/uc?export=download&id=1-hXEHZ26npEmE9TioMBZNAQdlPeGBNIE",
+          isDownloadable: true,
         }
       case "theme-page-masterclass":
         return {
@@ -98,6 +100,8 @@ export default function AccountPage() {
           type: "Video Course",
           hasAccess: true,
           accessUrl: "/course/theme-page-masterclass",
+          downloadUrl: "/course/theme-page-masterclass",
+          isDownloadable: false,
         }
       case "theme-page-masterclass-ebook":
         return {
@@ -105,6 +109,8 @@ export default function AccountPage() {
           type: "E-Book",
           hasAccess: true,
           accessUrl: "/products/theme-page-masterclass-ebook",
+          downloadUrl: "https://drive.google.com/uc?export=download&id=1UEEeyznbNAlU2ryw-nPVxL6FNrEeiUjO",
+          isDownloadable: true,
         }
       case "viral-clip-pack-bundle":
         return {
@@ -112,6 +118,8 @@ export default function AccountPage() {
           type: "Digital Assets",
           hasAccess: true,
           accessUrl: "/products/viral-clip-pack-bundle",
+          downloadUrl: "https://drive.google.com/uc?export=download&id=1yqyU1kv5-jZv5XNDWZ5e1yEok0KTjMP0",
+          isDownloadable: true,
         }
       default:
         return {
@@ -119,6 +127,8 @@ export default function AccountPage() {
           type: "Digital Product",
           hasAccess: false,
           accessUrl: "#",
+          downloadUrl: "#",
+          isDownloadable: false,
         }
     }
   }
@@ -298,15 +308,25 @@ export default function AccountPage() {
                               {new Date(purchase.purchased_at || purchase.created_at).toLocaleDateString()}
                             </p>
                           </div>
-                          <Button
-                            asChild
-                            size="sm"
-                            className="ml-2 bg-red-600 hover:bg-red-700 text-white hover:text-white transition-all duration-300 text-center"
-                          >
-                            <Link href={details.accessUrl}>
-                              <Download className="h-4 w-4" />
-                            </Link>
-                          </Button>
+                          {details.isDownloadable ? (
+                            <Button
+                              asChild
+                              size="sm"
+                              className="ml-2 bg-red-600 hover:bg-red-700 text-white hover:text-white transition-all duration-300 text-center"
+                            >
+                              <a href={details.downloadUrl} download>
+                                <Download className="h-4 w-4" />
+                              </a>
+                            </Button>
+                          ) : (
+                            <Button
+                              asChild
+                              size="sm"
+                              className="ml-2 bg-red-600 hover:bg-red-700 text-white hover:text-white transition-all duration-300 text-center"
+                            >
+                              <Link href={details.downloadUrl}>View</Link>
+                            </Button>
+                          )}
                         </div>
                       )
                     })}
