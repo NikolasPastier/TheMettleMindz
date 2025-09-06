@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { stripe } from "@/lib/stripe-server"
 import { db } from "@/lib/db"
-import { crypto } from "crypto"
+import { randomUUID } from "crypto"
 
 export async function POST(request: NextRequest) {
   try {
@@ -139,6 +139,7 @@ export async function POST(request: NextRequest) {
     try {
       session = await stripe.checkout.sessions.create(sessionConfig)
       console.log("[v0] Checkout session created successfully:", session.id)
+      console.log("[v0] Session success URL will be:", session.success_url)
     } catch (stripeError) {
       console.error("[v0] Stripe session creation failed:", stripeError)
 
@@ -183,7 +184,7 @@ export async function POST(request: NextRequest) {
       console.log("[v0] Products count:", productsData.length)
 
       const checkoutSessionData = {
-        id: crypto.randomUUID(),
+        id: randomUUID(),
         session_id: session.id,
         user_email: userEmail,
         products: productsData,
@@ -193,10 +194,15 @@ export async function POST(request: NextRequest) {
         updated_at: new Date().toISOString(),
       }
 
+      console.log("[v0] Storing session_id in database:", session.id)
+      console.log("[v0] Session_id length:", session.id.length)
+      console.log("[v0] Session_id starts with:", session.id.substring(0, 8))
+
       const insertedSession = await db.checkout_sessions.insert(checkoutSessionData)
 
       if (insertedSession) {
         console.log("[v0] Checkout session saved successfully to database:", insertedSession.id)
+        console.log("[v0] Stored session_id:", insertedSession.session_id)
         console.log("[v0] Cart saved to database with pending status for user:", userEmail)
       } else {
         console.error("[v0] Failed to save checkout session - no data returned")

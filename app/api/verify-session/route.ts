@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { stripe } from "@/lib/stripe-server"
 import { db } from "@/lib/db"
-import crypto from "crypto"
+import { randomUUID } from "crypto"
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,6 +13,8 @@ export async function GET(request: NextRequest) {
     }
 
     console.log("[v0] Verifying session:", sessionId)
+    console.log("[v0] Session_id length:", sessionId.length)
+    console.log("[v0] Session_id starts with:", sessionId.substring(0, 8))
 
     if (!stripe) {
       console.error("[v0] Stripe is not configured")
@@ -27,7 +29,10 @@ export async function GET(request: NextRequest) {
       try {
         const allSessions = await db.checkout_sessions.findAll()
         console.log("[v0] Total checkout sessions in database:", allSessions.length)
-        console.log("[v0] Stored session_ids:", allSessions.map((s) => s.session_id).slice(0, 5)) // Show first 5 for debugging
+        const storedSessionIds = allSessions.map((s) => s.session_id)
+        console.log("[v0] Stored session_ids:", storedSessionIds.slice(0, 5)) // Show first 5 for debugging
+        console.log("[v0] Looking for exact match:", sessionId)
+        console.log("[v0] Exact match found:", storedSessionIds.includes(sessionId))
       } catch (debugError) {
         console.error("[v0] Error fetching all sessions for debugging:", debugError)
       }
@@ -136,7 +141,7 @@ export async function GET(request: NextRequest) {
         }
 
         const purchaseData = {
-          id: crypto.randomUUID(),
+          id: randomUUID(),
           user_id: checkoutSession.user_id || null,
           customer_email: customerEmail,
           product_id: productId,
