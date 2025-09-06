@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { stripe } from "@/lib/stripe-server"
 import { db } from "@/lib/db"
+import crypto from "crypto"
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,20 +21,60 @@ export async function GET(request: NextRequest) {
 
     let checkoutSession
     try {
+      console.log("[v0] Searching for session_id in database:", sessionId)
+
+      // First, let's see what sessions exist in the database for debugging
+      try {
+        const allSessions = await db.checkout_sessions.findAll()
+        console.log("[v0] Total checkout sessions in database:", allSessions.length)
+        console.log("[v0] Stored session_ids:", allSessions.map((s) => s.session_id).slice(0, 5)) // Show first 5 for debugging
+      } catch (debugError) {
+        console.error("[v0] Error fetching all sessions for debugging:", debugError)
+      }
+
       checkoutSession = await db.checkout_sessions.findOne("session_id", sessionId)
 
       if (!checkoutSession) {
-        console.log("[v0] Checkout session not found in database:", sessionId)
-        return NextResponse.json({ error: "Session not found" }, { status: 404 })
+        console.error("[v0] Checkout session not found in database!")
+        console.error("[v0] Requested session_id:", sessionId)
+        console.error("[v0] This means either:")
+        console.error("[v0] 1. The session was never saved during checkout")
+        console.error("[v0] 2. There's a mismatch between stored and requested session_id")
+        console.error("[v0] 3. The checkout_sessions table doesn't exist")
+
+        return NextResponse.json(
+          {
+            error: "Session not found in database",
+            details: `No checkout session found with session_id: ${sessionId}`,
+            debug: {
+              requested_session_id: sessionId,
+              session_id_length: sessionId.length,
+              session_id_prefix: sessionId.substring(0, 8),
+            },
+          },
+          { status: 404 },
+        )
       }
 
-      console.log("[v0] Found checkout session in database:", checkoutSession.id)
+      console.log("[v0] Found checkout session in database:", {
+        id: checkoutSession.id,
+        session_id: checkoutSession.session_id,
+        user_email: checkoutSession.user_email,
+        status: checkoutSession.status,
+      })
     } catch (dbError) {
       console.error("[v0] Database error during session lookup:", dbError)
+      console.error("[v0] Error details:", dbError instanceof Error ? dbError.message : "Unknown error")
+      console.error("[v0] This might indicate the checkout_sessions table doesn't exist")
+
       return NextResponse.json(
         {
           error: "Database error during session verification",
           details: dbError instanceof Error ? dbError.message : "Unknown database error",
+          debug: {
+            requested_session_id: sessionId,
+            error_type: "database_lookup_failed",
+          },
         },
         { status: 500 },
       )
