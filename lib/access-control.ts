@@ -34,6 +34,17 @@ export async function checkCourseAccess(productId: string): Promise<AccessContro
 
     const purchase = purchases && purchases.length > 0 ? purchases[0] : null
 
+    if (purchase) {
+      console.log(
+        "[v0] Course access granted for product:",
+        productId,
+        "Purchase amount:",
+        purchase.amount,
+        "Type:",
+        purchase.amount === 0 ? "FREE" : "PAID",
+      )
+    }
+
     return {
       hasAccess: !!purchase,
       purchase: purchase || null,

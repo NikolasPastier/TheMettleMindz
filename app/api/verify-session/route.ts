@@ -113,10 +113,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Payment not completed" }, { status: 400 })
     }
 
+    const isFreeTransaction = stripeSession.amount_total === 0 || checkoutSession.total_amount === 0
+    console.log("[v0] Transaction type:", isFreeTransaction ? "FREE" : "PAID", "Amount:", stripeSession.amount_total)
+
     const customerEmail = stripeSession.customer_details?.email || checkoutSession.user_email
     const products = checkoutSession.products || []
 
     console.log("[v0] Processing", products.length, "products for purchase recording")
+    console.log("[v0] User ID from checkout session:", checkoutSession.user_id)
+    console.log("[v0] Customer email:", customerEmail)
 
     const purchaseResults = []
     for (const product of products) {
@@ -131,7 +136,9 @@ export async function GET(request: NextRequest) {
         const existingPurchases = await db.purchases.findBy("product_id", productId)
         const existingPurchase = existingPurchases.find(
           (p) =>
-            p.status === "completed" && (p.customer_email === customerEmail || p.user_id === checkoutSession.user_id),
+            p.status === "completed" &&
+            ((checkoutSession.user_id && p.user_id === checkoutSession.user_id) ||
+              (customerEmail && p.customer_email === customerEmail)),
         )
 
         if (existingPurchase) {
@@ -142,13 +149,13 @@ export async function GET(request: NextRequest) {
 
         const purchaseData = {
           id: randomUUID(),
-          user_id: checkoutSession.user_id || null, // Use user_id from checkout session
+          user_id: checkoutSession.user_id || null,
           product_id: productId,
-          customer_email: customerEmail, // Add customer_email for guest fallback
-          amount: product.price * (product.quantity || 1) * 100,
+          customer_email: customerEmail,
+          amount: isFreeTransaction ? 0 : product.price * (product.quantity || 1) * 100,
           currency: stripeSession.currency || "usd",
-          status: "completed",
-          purchased_at: new Date().toISOString(), // Add purchased_at timestamp
+          status: "completed", // Mark as completed even for free purchases
+          purchased_at: new Date().toISOString(),
           stripe_session_id: sessionId,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -156,15 +163,30 @@ export async function GET(request: NextRequest) {
 
         try {
           await db.purchases.insert(purchaseData)
-          console.log("[v0] Purchase saved successfully for product:", productId, "for user:", checkoutSession.user_id)
-          purchaseResults.push({ productId, status: "saved", amountPaid: product.price })
+          console.log(
+            "[v0] Purchase saved successfully for product:",
+            productId,
+            "User ID:",
+            checkoutSession.user_id,
+            "Email:",
+            customerEmail,
+            "Amount:",
+            purchaseData.amount,
+            "Type:",
+            isFreeTransaction ? "FREE" : "PAID",
+          )
+          purchaseResults.push({
+            productId,
+            status: "saved",
+            amountPaid: isFreeTransaction ? 0 : product.price,
+            isFree: isFreeTransaction,
+          })
         } catch (insertError) {
-          // Check if it's a duplicate key error
           if (insertError instanceof Error && insertError.message.includes("duplicate")) {
             console.log("[v0] Purchase already exists (duplicate key) for product:", productId)
             purchaseResults.push({ productId, status: "already_exists" })
           } else {
-            throw insertError // Re-throw if it's not a duplicate error
+            throw insertError
           }
         }
       } catch (itemError) {
@@ -187,6 +209,7 @@ export async function GET(request: NextRequest) {
       console.error("[v0] Error updating checkout session:", updateError)
     }
 
+    // Clear user's cart after successful purchase
     if (checkoutSession.user_id) {
       try {
         const cartItems = await db.cart.findBy("user_id", checkoutSession.user_id)
@@ -213,7 +236,7 @@ export async function GET(request: NextRequest) {
       purchasesSaved: purchaseResults.filter((p) => p.status === "saved" || p.status === "already_exists").length > 0,
       purchaseResults,
       cartCleared: !!checkoutSession.user_id,
-      isFree: checkoutSession.total_amount === 0,
+      isFree: isFreeTransaction,
     })
   } catch (error) {
     console.error("[v0] Unexpected error in verify-session:", error)
