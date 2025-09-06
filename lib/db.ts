@@ -1,27 +1,4 @@
-import { neon } from "@neondatabase/serverless"
-
-const getDatabaseUrl = () => {
-  const possibleUrls = [
-    process.env.NEON_NEON_DATABASE_URL,
-    process.env.NEON_DATABASE_URL,
-    process.env.NEON_POSTGRES_URL,
-    process.env.POSTGRES_URL,
-  ]
-
-  const url = possibleUrls.find((url) => url && url.length > 0)
-
-  if (!url) {
-    throw new Error(
-      `No database connection string found. Checked: ${possibleUrls
-        .map((_, i) => ["DATABASE_URL", "NEON_DATABASE_URL", "NEON_POSTGRES_URL", "POSTGRES_URL"][i])
-        .join(", ")}`,
-    )
-  }
-
-  return url
-}
-
-const sql = neon(getDatabaseUrl())
+import { createClient } from "@/lib/supabase/server"
 
 interface DbTable {
   get: (id: string) => Promise<any>
@@ -35,46 +12,51 @@ interface DbTable {
 function createTable(tableName: string): DbTable {
   return {
     async get(id: string) {
-      const result = await sql`SELECT * FROM ${sql.unsafe(tableName)} WHERE id = ${id}`
-      return result[0] || null
+      const supabase = await createClient()
+      const { data, error } = await supabase.from(tableName).select("*").eq("id", id).single()
+
+      if (error) throw error
+      return data
     },
 
     async insert(data: any) {
-      const keys = Object.keys(data)
-      const values = Object.values(data)
-      const placeholders = keys.map(() => "?").join(", ")
-      const columns = keys.join(", ")
+      const supabase = await createClient()
+      const { data: result, error } = await supabase.from(tableName).insert(data).select().single()
 
-      const query = `INSERT INTO ${tableName} (${columns}) VALUES (${keys.map((_, i) => `$${i + 1}`).join(", ")}) RETURNING *`
-      const result = await sql.query(query, values)
-      return result.rows[0]
+      if (error) throw error
+      return result
     },
 
     async update(id: string, data: any) {
-      const keys = Object.keys(data)
-      const values = Object.values(data)
-      const setClause = keys.map((key, i) => `${key} = $${i + 2}`).join(", ")
+      const supabase = await createClient()
+      const { data: result, error } = await supabase.from(tableName).update(data).eq("id", id).select().single()
 
-      const query = `UPDATE ${tableName} SET ${setClause} WHERE id = $1 RETURNING *`
-      const result = await sql.query(query, [id, ...values])
-      return result.rows[0]
+      if (error) throw error
+      return result
     },
 
     async delete(id: string) {
-      const result = await sql`DELETE FROM ${sql.unsafe(tableName)} WHERE id = ${id} RETURNING *`
-      return result[0]
+      const supabase = await createClient()
+      const { data, error } = await supabase.from(tableName).delete().eq("id", id).select().single()
+
+      if (error) throw error
+      return data
     },
 
     async findBy(field: string, value: any) {
-      const query = `SELECT * FROM ${tableName} WHERE ${field} = $1`
-      const result = await sql.query(query, [value])
-      return result.rows
+      const supabase = await createClient()
+      const { data, error } = await supabase.from(tableName).select("*").eq(field, value)
+
+      if (error) throw error
+      return data || []
     },
 
     async findOne(field: string, value: any) {
-      const query = `SELECT * FROM ${tableName} WHERE ${field} = $1 LIMIT 1`
-      const result = await sql.query(query, [value])
-      return result.rows[0] || null
+      const supabase = await createClient()
+      const { data, error } = await supabase.from(tableName).select("*").eq(field, value).single()
+
+      if (error && error.code !== "PGRST116") throw error // PGRST116 is "not found"
+      return data
     },
   }
 }
