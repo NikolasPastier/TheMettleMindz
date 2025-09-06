@@ -46,7 +46,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User email is required for checkout" }, { status: 400 })
     }
 
+    let userId = null
+    try {
+      const { createServerClient } = await import("@/lib/supabase/server")
+      const { cookies } = await import("next/headers")
+      const supabase = createServerClient(cookies())
+
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser()
+      if (user && !authError) {
+        userId = user.id
+        console.log("[v0] Found authenticated user:", userId)
+      } else {
+        console.log("[v0] No authenticated user found, proceeding with email only")
+      }
+    } catch (authError) {
+      console.error("[v0] Error getting user from auth:", authError)
+    }
+
     console.log("[v0] Processing checkout for user:", userEmail)
+    console.log("[v0] User ID:", userId)
     console.log("[v0] Cart items:", cartItems)
 
     const originalTotal = cartItems.reduce((sum: number, item: any) => sum + item.price * (item.quantity || 1), 0)
@@ -181,12 +202,14 @@ export async function POST(request: NextRequest) {
       console.log("[v0] Attempting to save checkout session to database...")
       console.log("[v0] Session ID:", session.id)
       console.log("[v0] User email:", userEmail)
+      console.log("[v0] User ID:", userId)
       console.log("[v0] Products count:", productsData.length)
 
       const checkoutSessionData = {
         id: randomUUID(),
         session_id: session.id,
         user_email: userEmail,
+        user_id: userId,
         products: productsData,
         total_amount: finalTotal,
         status: "pending",

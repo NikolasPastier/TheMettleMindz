@@ -142,8 +142,7 @@ export async function GET(request: NextRequest) {
 
         const purchaseData = {
           id: randomUUID(),
-          user_id: checkoutSession.user_id || null,
-          customer_email: customerEmail,
+          user_id: checkoutSession.user_id || null, // Use user_id from checkout session
           product_id: productId,
           amount: product.price * (product.quantity || 1) * 100,
           currency: stripeSession.currency || "usd",
@@ -155,7 +154,7 @@ export async function GET(request: NextRequest) {
         }
 
         await db.purchases.insert(purchaseData)
-        console.log("[v0] Purchase saved successfully for product:", productId)
+        console.log("[v0] Purchase saved successfully for product:", productId, "for user:", checkoutSession.user_id)
         purchaseResults.push({ productId, status: "saved", amountPaid: product.price })
       } catch (itemError) {
         console.error("[v0] Error processing product:", itemError)
