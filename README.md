@@ -1,179 +1,205 @@
-# Next.js Authentication & CRUD App
+🧠 TheMettleMindz — Discipline. Mindset. Growth.
 
-A full-stack Next.js application with TypeScript, Supabase authentication, and product management dashboard.
+TheMettleMindz is a full-stack web application that merges technology with personal growth — a platform for creators, coaches, and entrepreneurs to manage products, digital resources, and personal brands built around mindset, discipline, and self-improvement.
 
-## Features
+Built with Next.js 14, Supabase, and TailwindCSS, it features secure authentication, product management, and a responsive, aesthetic dashboard optimized for both performance and productivity.
 
-- 🔐 **Authentication**: Email/password authentication with Supabase
-- 📊 **Dashboard**: Protected dashboard with product management
-- 🛡️ **Security**: Row Level Security (RLS) policies and secure API routes
-- 🎨 **UI**: Dark theme with TailwindCSS and shadcn/ui components
-- 📱 **Responsive**: Mobile-first responsive design
+🌐 Live App: https://themettlmindz.com
 
-## Tech Stack
+⸻
 
-- **Framework**: Next.js 14 with App Router
-- **Language**: TypeScript
-- **Database**: Supabase (PostgreSQL)
-- **Authentication**: Supabase Auth
-- **Styling**: TailwindCSS + shadcn/ui
-- **Deployment**: Vercel
+✨ Features
 
-## Getting Started
+🔐 Authentication
+	•	Email & password authentication powered by Supabase Auth.
+	•	Secure session handling and persistent user login.
+	•	Email confirmation and password recovery built-in.
 
-### Prerequisites
+🧭 Dashboard
+	•	Fully protected dashboard with role-based access control.
+	•	Manage products, digital assets, and content in a clean UI.
+	•	View analytics, edit profiles, and track updates.
 
-- Node.js 18+ 
-- A Supabase project
-- Vercel account (for deployment)
+🧱 CRUD System
+	•	Create, read, update, and delete products or digital resources.
+	•	Connect products to users with relational Supabase tables.
+	•	Integrated Row Level Security (RLS) for data isolation.
 
-### Installation
+🎨 UI & UX
+	•	Sleek dark-mode aesthetic built with TailwindCSS and shadcn/ui.
+	•	Consistent, modern design across all devices.
+	•	Smooth animations and intuitive layout with a focus on clarity and flow.
 
-1. **Clone the repository**
-   \`\`\`bash
-   git clone <your-repo-url>
-   cd your-project-name
-   npm install
-   \`\`\`
+🛡️ Security
+	•	Row Level Security (RLS) on all user data.
+	•	Protected API routes with session validation.
+	•	Input validation, secure headers, and HTTPS enforced in production.
 
-2. **Set up environment variables**
-   \`\`\`bash
-   cp .env.example .env.local
-   \`\`\`
-   
-   Fill in your Supabase credentials:
-   - `NEXT_PUBLIC_SUPABASE_URL`: Your Supabase project URL
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Your Supabase anon key
-   - `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase service role key
+📱 Responsive Design
+	•	Mobile-first design that adapts beautifully to all screen sizes.
+	•	Optimized for creators, athletes, and coaches managing products on the go.
 
-3. **Set up the database**
-   
-   Run the SQL scripts in order:
-   \`\`\`sql
-   -- Run these in your Supabase SQL editor or use the scripts folder
-   scripts/001_create_users_table.sql
-   scripts/002_create_products_table.sql
-   scripts/003_create_profile_trigger.sql
-   \`\`\`
+⸻
 
-4. **Run the development server**
-   \`\`\`bash
-   npm run dev
-   \`\`\`
+🏗️ Tech Stack
 
-   Open [http://localhost:3000](http://localhost:3000) in your browser.
+Frontend: Next.js 14 (App Router), TypeScript, React
+Backend & Database: Supabase (PostgreSQL, Auth, RLS)
+Styling: TailwindCSS + shadcn/ui
+Deployment: Vercel
+Authentication: Supabase Email Auth
+Security: RLS Policies + Middleware Protection
 
-## Project Structure
+⸻
 
-\`\`\`
-├── app/
-│   ├── api/                 # API routes
-│   ├── auth/               # Authentication pages
-│   ├── dashboard/          # Protected dashboard
-│   └── layout.tsx          # Root layout
-├── components/             # Reusable components
+⚙️ Getting Started
+
+🧩 Prerequisites
+	•	Node.js 18+
+	•	Supabase project
+	•	Vercel account (for deployment)
+
+📦 Installation
+	1.	Clone the repository
+	•	git clone https://github.com/yourusername/themettlmindz.git
+	•	cd themettlemindz
+	2.	Install dependencies
+	•	npm install or pnpm install
+	3.	Set up environment variables
+	•	Copy the example file:
+	•	cp .env.example .env.local
+	•	Fill in your credentials:
+	•	NEXT_PUBLIC_SUPABASE_URL
+	•	NEXT_PUBLIC_SUPABASE_ANON_KEY
+	•	SUPABASE_SERVICE_ROLE_KEY
+	4.	Set up the database
+	•	Run SQL scripts in your Supabase SQL Editor or use the /scripts folder:
+	•	scripts/001_create_users_table.sql
+	•	scripts/002_create_products_table.sql
+	•	scripts/003_create_profile_trigger.sql
+	5.	Run the development server
+	•	npm run dev
+	•	Open http://localhost:3000
+
+⸻
+
+🗂️ Project Structure
+
+themettlmindz/
+├── app/ — Next.js App Router pages
+│   ├── api/ — API routes
+│   ├── auth/ — Authentication pages
+│   ├── dashboard/ — Protected dashboard
+│   └── layout.tsx — Root layout
+├── components/ — Reusable UI components
 ├── lib/
-│   ├── supabase/          # Supabase client configuration
-│   ├── auth-utils.ts      # Authentication utilities
-│   └── api-utils.ts       # API utilities
-├── scripts/               # Database migration scripts
-└── middleware.ts          # Route protection middleware
-\`\`\`
+│   ├── supabase/ — Supabase client configuration
+│   ├── auth-utils.ts — Authentication utilities
+│   └── api-utils.ts — API utilities
+├── scripts/ — Database migration SQL scripts
+└── middleware.ts — Route protection middleware
 
-## Authentication Flow
+⸻
 
-1. **Sign Up**: Users create an account with email/password
-2. **Email Confirmation**: Users must confirm their email address
-3. **Sign In**: Users can sign in with confirmed credentials
-4. **Protected Routes**: Dashboard requires authentication
-5. **Row Level Security**: Database policies ensure users only access their own data
+🔁 Authentication Flow
+	1.	Sign Up — Users register with email/password.
+	2.	Email Confirmation — Verification link required to activate accounts.
+	3.	Sign In — Users log in with confirmed credentials.
+	4.	Protected Routes — Dashboard and API routes require authentication.
+	5.	RLS Policies — Ensure users only access their own data.
 
-## API Routes
+⸻
 
-- `POST /api/auth/register` - User registration
-- `GET /api/products` - Get user's products
-- `POST /api/products` - Create new product
-- `PUT /api/products/[id]` - Update product
-- `DELETE /api/products/[id]` - Delete product
-- `GET /api/user/profile` - Get user profile
-- `PUT /api/user/profile` - Update user profile
+🔧 API Routes
 
-## Database Schema
+POST /api/auth/register — Register new users
+GET /api/products — Retrieve user’s products
+POST /api/products — Create new product
+PUT /api/products/[id] — Update product
+DELETE /api/products/[id] — Delete product
+GET /api/user/profile — Get user profile
+PUT /api/user/profile — Update user profile
 
-### Users Table
-\`\`\`sql
-users (
-  id: uuid (references auth.users)
-  email: text
-  full_name: text
-  created_at: timestamp
-  updated_at: timestamp
-)
-\`\`\`
+⸻
 
-### Products Table
-\`\`\`sql
-products (
-  id: uuid
-  title: text
-  description: text
-  price: decimal
-  user_id: uuid (references users.id)
-  created_at: timestamp
-  updated_at: timestamp
-)
-\`\`\`
+🧾 Database Schema
 
-## Security Features
+users
+	•	id (UUID, references auth.users)
+	•	email (text)
+	•	full_name (text)
+	•	created_at (timestamp)
+	•	updated_at (timestamp)
 
-- **Row Level Security (RLS)**: Database-level security policies
-- **Authentication Middleware**: Route protection
-- **Input Validation**: API request validation
-- **Security Headers**: XSS and clickjacking protection
-- **HTTPS Only**: Secure connections in production
+products
+	•	id (UUID)
+	•	title (text)
+	•	description (text)
+	•	price (decimal)
+	•	user_id (UUID, references users.id)
+	•	created_at (timestamp)
+	•	updated_at (timestamp)
 
-## Deployment
+⸻
 
-### Deploy to Vercel
+🛡️ Security
+	•	Row Level Security (RLS): Database policies restricting data per user.
+	•	Auth Middleware: Protects private routes and API endpoints.
+	•	Input Validation: Prevents injection and malformed data.
+	•	Security Headers: XSS and clickjacking protection.
+	•	HTTPS: Enforced in production for secure data transmission.
 
-1. **Connect your repository to Vercel**
-2. **Set environment variables in Vercel dashboard**
-3. **Deploy**: Vercel will automatically deploy on push to main branch
+⸻
 
-### Environment Variables for Production
+🚀 Deployment
+	1.	Push your project to GitHub.
+	2.	Connect your repository to Vercel.
+	3.	Set environment variables in the Vercel dashboard:
+	•	NEXT_PUBLIC_SUPABASE_URL
+	•	NEXT_PUBLIC_SUPABASE_ANON_KEY
+	•	SUPABASE_SERVICE_ROLE_KEY
+	•	NEXT_PUBLIC_APP_URL=https://your-domain.vercel.app
+	4.	Deploy — automatic builds on each push to main.
 
-\`\`\`bash
-NEXT_PUBLIC_SUPABASE_URL=your_production_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_production_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_production_service_role_key
-NEXT_PUBLIC_APP_URL=https://your-domain.vercel.app
-\`\`\`
+⸻
 
-## Development
+🧪 Development
 
-### Running Tests
-\`\`\`bash
-npm run test
-\`\`\`
+Run tests: npm run test
+Lint code: npm run lint
+Type check: npm run type-check
 
-### Linting
-\`\`\`bash
-npm run lint
-\`\`\`
+⸻
 
-### Type Checking
-\`\`\`bash
-npm run type-check
-\`\`\`
+💡 Vision
 
-## Contributing
+TheMettleMindz is more than a product dashboard — it’s the foundation for a digital ecosystem empowering creators and athletes to live with discipline, purpose, and control.
+Every feature is designed to simplify backend chaos so users can focus on growth — mentally, physically, and financially.
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+⸻
 
-## License
+🧑‍💻 Contributing
+	1.	Fork the repository
+	2.	Create your feature branch (git checkout -b feature/amazing-feature)
+	3.	Commit your changes (git commit -m 'Add amazing feature')
+	4.	Push to your branch (git push origin feature/amazing-feature)
+	5.	Open a Pull Request
 
-MIT License - see LICENSE file for details
+⸻
+
+📜 License
+
+Licensed under the MIT License — see the LICENSE file for details.
+
+⸻
+
+💬 Credits
+
+Developed by Nikolas Pastier
+Built with ❤️ using Next.js, Supabase, and TailwindCSS.
+
+⸻
+
+🌟 If you like this project
+
+Give it a ⭐ on GitHub and share it with your community.
